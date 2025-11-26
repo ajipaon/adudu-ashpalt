@@ -5,7 +5,7 @@ import PostMeta from "Frontend/generated/com/adudu/ashpalt/models/project/PostMe
 import MetaType from "Frontend/generated/com/adudu/ashpalt/models/project/MetaType";
 import ProjectMemberDTO from "Frontend/generated/com/adudu/ashpalt/services/project/ProjectService/ProjectMemberDTO";
 
-const metaPrefixKey = 'assignee';
+const mKey = 'assignee';
 const metaType: MetaType = MetaType.UUID
 interface AssigneesTaskProps{
     postId: string
@@ -18,7 +18,7 @@ export default function AssigneesTask({postId, projectId}: AssigneesTaskProps) {
     const [members, setMembers] = useState<ProjectMemberDTO[]>([])
 
     const loadData = useCallback(() => {
-        PostMetaService.getMeta(postId, "assignee")
+        PostMetaService.getMeta(postId, mKey)
             .then((value) => {
                 const filteredAssignees = (value || []).filter((assignee): assignee is PostMeta =>
                     assignee !== undefined
@@ -55,7 +55,7 @@ export default function AssigneesTask({postId, projectId}: AssigneesTaskProps) {
         try {
             const newMeta: PostMeta = {
                 postId,
-                metaKey: metaPrefixKey,
+                metaKey: mKey,
                 metaType,
                 metaValue: newAssignee.trim()
             };
