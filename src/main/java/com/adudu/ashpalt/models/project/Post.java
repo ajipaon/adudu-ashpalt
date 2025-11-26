@@ -2,8 +2,6 @@ package com.adudu.ashpalt.models.project;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Entity

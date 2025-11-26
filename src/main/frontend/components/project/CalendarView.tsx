@@ -1,11 +1,10 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
-import {DatePicker, Dialog} from '@vaadin/react-components';
-import { DatePickerElement } from '@vaadin/react-components/DatePicker';
+import { useCallback, useEffect, useState } from 'react';
+import { Dialog, TimePicker } from '@vaadin/react-components';
 import { X, Plus } from 'lucide-react';
 import MetaType from "Frontend/generated/com/adudu/ashpalt/models/project/MetaType";
 import PostMeta from "Frontend/generated/com/adudu/ashpalt/models/project/PostMeta";
-import {PostMetaService} from "Frontend/generated/endpoints";
-import {dayNames, formatDateIso8601, monthNames, parseDateIso8601} from "Frontend/util/date";
+import { PostMetaService } from "Frontend/generated/endpoints";
+import { dayNames, monthNames } from "Frontend/util/date";
 
 interface CalendarViewProps {
     projectId: string;
@@ -14,13 +13,15 @@ interface CalendarViewProps {
 const mKey = 'calender';
 const metaType: MetaType = MetaType.JSON
 
-interface MetaValueCalenderProps{
+interface MetaValueCalenderProps {
     title: string;
     description?: string;
     date: Date;
     color: string;
     startTime: string;
     endTime: string;
+    recurrenceType?: 'single' | 'range' | 'daily';
+    endDate?: Date;
 }
 
 // parent untuk calender adalah projectId
@@ -33,12 +34,14 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
     const [newTaskDescription, setNewTaskDescription] = useState('');
     const [newTaskPriority, setNewTaskPriority] = useState('medium');
     const [newTaskColor, setNewTaskColor] = useState('bg-blue-500');
+    const [newTaskStartTime, setNewTaskStartTime] = useState('09:00');
+    const [newTaskEndTime, setNewTaskEndTime] = useState('17:00');
+    const [isFullDay, setIsFullDay] = useState(false);
     const [showTaskDetails, setShowTaskDetails] = useState(false);
     const [tasksForSelectedDate, setTasksForSelectedDate] = useState<PostMeta[]>([]);
-    const datePickerRef = useRef<DatePickerElement>(null);
-    const [startFrom, setStartFrom] = useState<Date>(new Date())
+    const [recurrenceType, setRecurrenceType] = useState<'single' | 'range' | 'daily'>('single');
+    const [endDate, setEndDate] = useState<Date | null>(null);
 
-    const now = new Date();
     const [tasks, setTasks] = useState<PostMeta[]>([]);
 
     const loadCalendar = useCallback(() => {
@@ -54,16 +57,6 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
 
     }, [projectId]);
 
-    useEffect(() => {
-        const datePicker = datePickerRef.current;
-        if (datePicker) {
-            datePicker.i18n = {
-                ...datePicker.i18n,
-                formatDate: formatDateIso8601,
-                parseDate: parseDateIso8601,
-            };
-        }
-    }, []);
 
     useEffect(() => {
         loadCalendar()
@@ -103,8 +96,29 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
     const getTasksForDate = (date: Date | null) => {
         if (!date) return [];
         return tasks.filter(task => {
-            const content: MetaValueCalenderProps  = JSON.parse(task.metaValue!!);
+            const content: MetaValueCalenderProps = JSON.parse(task.metaValue!!);
             const taskDate = new Date(content.date);
+            const recurrence = content.recurrenceType || 'single';
+
+            // Daily recurring tasks appear on all dates
+            if (recurrence === 'daily') {
+                return true;
+            }
+
+            // Date range tasks appear between start and end date
+            if (recurrence === 'range' && content.endDate) {
+                const taskEndDate = new Date(content.endDate);
+                const checkDate = new Date(date);
+                checkDate.setHours(0, 0, 0, 0);
+                const startDate = new Date(taskDate);
+                startDate.setHours(0, 0, 0, 0);
+                const endDateNormalized = new Date(taskEndDate);
+                endDateNormalized.setHours(0, 0, 0, 0);
+
+                return checkDate >= startDate && checkDate <= endDateNormalized;
+            }
+
+            // Single day tasks (default behavior)
             return taskDate.getDate() === date.getDate() &&
                 taskDate.getMonth() === date.getMonth() &&
                 taskDate.getFullYear() === date.getFullYear();
@@ -142,11 +156,21 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
     const handleCreateTask = async () => {
         if (!newTaskTitle || !selectedDate) return;
 
+        // Validate end date for range type
+        if (recurrenceType === 'range' && (!endDate || endDate < selectedDate)) {
+            alert('End date must be after or equal to start date');
+            return;
+        }
+
         const newTask: MetaValueCalenderProps = {
             title: newTaskTitle,
             date: selectedDate,
             color: newTaskColor,
-            description: newTaskDescription
+            description: newTaskDescription,
+            startTime: isFullDay ? '' : newTaskStartTime,
+            endTime: isFullDay ? '' : newTaskEndTime,
+            recurrenceType: recurrenceType,
+            endDate: recurrenceType === 'range' ? endDate || undefined : undefined
         };
         const newMeta: PostMeta = {
             postId: projectId,
@@ -162,6 +186,11 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
         setNewTaskDescription('');
         setNewTaskPriority('medium');
         setNewTaskColor('bg-blue-500');
+        setNewTaskStartTime('09:00');
+        setNewTaskEndTime('10:00');
+        setIsFullDay(false);
+        setRecurrenceType('single');
+        setEndDate(null);
         setIsDialogOpen(false);
         setShowTaskDetails(false);
     };
@@ -252,7 +281,7 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                                     <div className="space-y-1">
                                         {dayTasks.map(task => {
                                             const content: MetaValueCalenderProps = JSON.parse(task.metaValue!!)
-                                            return(
+                                            return (
                                                 <div
                                                     key={task.id}
                                                     className="bg-white rounded shadow-sm p-2 border-l-4 hover:shadow-md transition-shadow"
@@ -266,7 +295,8 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                                                         </div>
                                                     </div>
                                                 </div>
-                                            )})}
+                                            )
+                                        })}
                                     </div>
                                 </div>
                             );
@@ -298,23 +328,24 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                             <div className="space-y-3">
                                 {tasksForSelectedDate.map(task => {
                                     const content: MetaValueCalenderProps = JSON.parse(task.metaValue!!)
-                                   return (
+                                    return (
                                         <div
-                                        key={task.id}
-                                        className="bg-white rounded-lg shadow-sm p-4 border-l-4 hover:shadow-md transition-shadow cursor-pointer"
-                                        style={{ borderLeftColor: content.color.replace('bg-', '#') }}
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <div className={`w-3 h-3 rounded-full ${content.color} mt-1 flex-shrink-0`}></div>
-                                            <div className="flex-1">
-                                                <h4 className="text-sm font-medium text-gray-800 mb-1">
-                                                    {content.title}
-                                                </h4>
-                                                {content.description}
+                                            key={task.id}
+                                            className="bg-white rounded-lg shadow-sm p-4 border-l-4 hover:shadow-md transition-shadow cursor-pointer"
+                                            style={{ borderLeftColor: content.color.replace('bg-', '#') }}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className={`w-3 h-3 rounded-full ${content.color} mt-1 flex-shrink-0`}></div>
+                                                <div className="flex-1">
+                                                    <h4 className="text-sm font-medium text-gray-800 mb-1">
+                                                        {content.title}
+                                                    </h4>
+                                                    {content.description}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )})}
+                                    )
+                                })}
                             </div>
                         </div>
 
@@ -359,6 +390,63 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                         />
                     </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                            Recurrence Type
+                        </label>
+                        <div className="space-y-2">
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    name="recurrence"
+                                    value="single"
+                                    checked={recurrenceType === 'single'}
+                                    onChange={(e) => setRecurrenceType(e.target.value as 'single' | 'range' | 'daily')}
+                                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                />
+                                <span className="ml-2 text-sm text-gray-700">Single Day</span>
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    name="recurrence"
+                                    value="range"
+                                    checked={recurrenceType === 'range'}
+                                    onChange={(e) => setRecurrenceType(e.target.value as 'single' | 'range' | 'daily')}
+                                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                />
+                                <span className="ml-2 text-sm text-gray-700">Date Range</span>
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    name="recurrence"
+                                    value="daily"
+                                    checked={recurrenceType === 'daily'}
+                                    onChange={(e) => setRecurrenceType(e.target.value as 'single' | 'range' | 'daily')}
+                                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                />
+                                <span className="ml-2 text-sm text-gray-700">Every Day (Recurring)</span>
+                            </label>
+                        </div>
+
+                        {recurrenceType === 'range' && (
+                            <div className="mt-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    End Date
+                                </label>
+                                <input
+                                    type="date"
+                                    value={endDate ? endDate.toISOString().split('T')[0] : ''}
+                                    onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
+                                    min={selectedDate ? selectedDate.toISOString().split('T')[0] : ''}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                        )}
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Priority
@@ -374,14 +462,38 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                             <option value="urgent">Urgent</option>
                         </select>
                     </div>
-
                     <div>
-                        <DatePicker
-                            value={startFrom.toString()}
-                            ref={datePickerRef}
-                            label="Select Date"
-                            helperText="Start from"
-                        />
+                        <div className="flex items-center mb-3">
+                            <input
+                                type="checkbox"
+                                id="fullDay"
+                                checked={isFullDay}
+                                onChange={(e) => setIsFullDay(e.target.checked)}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <label htmlFor="fullDay" className="ml-2 text-sm font-medium text-gray-700">
+                                Full Day Event
+                            </label>
+                        </div>
+
+                        {!isFullDay && (
+                            <div className="grid grid-cols-2 gap-4">
+                                <TimePicker
+                                    label="Start Time"
+                                    value={newTaskStartTime}
+                                    onValueChanged={(e) => setNewTaskStartTime(e.detail.value)}
+                                    step={60 * 30}
+                                    className="w-full"
+                                />
+                                <TimePicker
+                                    label="End Time"
+                                    value={newTaskEndTime}
+                                    onValueChanged={(e) => setNewTaskEndTime(e.detail.value)}
+                                    step={60 * 30}
+                                    className="w-full"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div>
