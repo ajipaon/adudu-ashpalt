@@ -2,6 +2,7 @@ import MetaType from "Frontend/generated/com/adudu/ashpalt/models/project/MetaTy
 import PostMeta from "Frontend/generated/com/adudu/ashpalt/models/project/PostMeta";
 import {PriorityColors} from "Frontend/components/project/dto/projectDto";
 import {PostMetaService} from "Frontend/generated/endpoints";
+import {useCallback, useEffect} from "react";
 
 
 const mKey = 'priority';
@@ -9,12 +10,27 @@ const metaType: MetaType = MetaType.TEXT
 
 interface PriorityTaskProps {
     taskId: string;
-    priority: PostMeta;
-    loadDataPriority: () => void;
+    priority: PostMeta | null;
+    setPriority: (arg: PostMeta | null) => void
 }
 
-export default function PriorityTask ({taskId,priority,loadDataPriority}:PriorityTaskProps) {
+export default function PriorityTask ({taskId, priority, setPriority}:PriorityTaskProps) {
 
+    const loadDataPriority = useCallback(() => {
+        PostMetaService.getMeta(taskId!!, mKey)
+            .then((value) => {
+                const filtered = (value ?? []).filter((v): v is PostMeta => !!v);
+                setPriority(filtered[0] ?? null);
+            })
+            .catch((error) => {
+                console.error('Failed to load assignees:', error);
+                setPriority(null);
+            });
+    }, [taskId]);
+
+    useEffect(() => {
+        loadDataPriority()
+    }, []);
 
     const addPriority = async (priorityData: string) => {
         if (!priorityData.trim()) return;

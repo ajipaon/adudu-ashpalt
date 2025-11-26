@@ -96,7 +96,10 @@ export default function BoardView() {
     }, []);
 
     useEffect(() => {
-        const handleClickOutside = () => setOpenMenuColumnId(null);
+        const handleClickOutside = () => {
+            setOpenMenuColumnId(null)
+            setOpenMenuTaskId(null)
+        };
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
@@ -197,7 +200,6 @@ export default function BoardView() {
         setOpenMenuColumnId(null);
         loadProject(project!.id!);
     }
-
     async function handleMoveColumn(colId: string, index: string) {
         let int1 = parseInt(index);
         await ProjectService.moveOrderColumn(colId, int1);
@@ -206,8 +208,8 @@ export default function BoardView() {
     }
 
     async function handleDeleteTask(taskId: string) {
-        await ProjectService.deleteColumn(taskId);
-        setOpenMenuColumnId(null);
+        await ProjectService.deleteTask(taskId);
+        setOpenMenuTaskId(null);
         loadProject(project!.id!);
     }
 
@@ -224,9 +226,6 @@ export default function BoardView() {
 
             <div className="backdrop-blur-md bg-white/20 border   shadow-lg text-white">
                 <div className="px-6 py-3 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded flex items-center justify-center font-bold text-lg">
-                        {project.title?.charAt(0).toUpperCase() || 'P'}
-                    </div>
                     <div>
                         <h1 className="text-xl font-semibold">{project.title}</h1>
                         {project.description && (
@@ -238,35 +237,35 @@ export default function BoardView() {
                 <div className="px-6 flex gap-1 border-t border-slate-700">
                     <button
                         onClick={() => setActiveTab('summary')}
-                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'summary' ? 'bg-slate-700 border-b-2 border-blue-500' : ''
+                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'summary' ? 'bg-slate-700 border-b-2 ' : ''
                             }`}
                     >
                         Summary
                     </button>
                     <button
                         onClick={() => setActiveTab('timeline')}
-                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'timeline' ? 'bg-slate-700 border-b-2 border-blue-500' : ''
+                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'timeline' ? 'bg-slate-700 border-b-2' : ''
                             }`}
                     >
                         Timeline
                     </button>
                     <button
                         onClick={() => setActiveTab('backlog')}
-                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'backlog' ? 'bg-slate-700 border-b-2 border-blue-500' : ''
+                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'backlog' ? 'bg-slate-700 border-b-2' : ''
                             }`}
                     >
                         Backlog
                     </button>
                     <button
                         onClick={() => setActiveTab('board')}
-                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'board' ? 'bg-slate-700 border-b-2 border-blue-500' : ''
+                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'board' ? 'bg-slate-700 border-b-2' : ''
                             }`}
                     >
                         Board
                     </button>
                     <button
                         onClick={() => setActiveTab('calendar')}
-                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'calendar' ? 'bg-slate-700 border-b-2 border-blue-500' : ''
+                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'calendar' ? 'bg-slate-700 border-b-2 ' : ''
                             }`}
                     >
                         Calendar

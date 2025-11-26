@@ -98,7 +98,7 @@ public class ProjectService {
             member.setUserId(authenticatedUser.getUserId());
             member.setRole(ProjectMemberRole.OWNER);
             projectMemberRepository.save(member);
-            generateDefaultColumns(savedProject.getId());
+            generateDefaultColumns(savedProject.getId(), authenticatedUser.getUserId());
         }
         return savedProject;
     }
@@ -330,7 +330,6 @@ public class ProjectService {
         postRepository.saveAll(tasksInColumn);
     }
 
-    @Transactional
     @RolesAllowed("project-create")
     public ProjectMember addProjectMember(UUID projectId, UUID userId, ProjectMemberRole role) {
 
@@ -411,7 +410,7 @@ public class ProjectService {
     }
 
     @Async
-    protected void generateDefaultColumns(UUID projectId) {
+    protected void generateDefaultColumns(UUID projectId, UUID userId) {
         List<String> columns = List.of("To Do", "In Progress", "Review", "Done");
 
         for (int i = 0; i < columns.size(); i++) {
@@ -422,19 +421,7 @@ public class ProjectService {
             column.setPostOrder(i);
             postService.createPost(column);
         }
-    }
-    @RolesAllowed("project-update")
-    public Post saveChecklistItem(Post item) {
-        return postService.createPost(item);
-    }
-    @RolesAllowed("project-delete")
-    public void deleteChecklistItem(UUID id) {
-        postService.deletePost(id);
-    }
-
-    @RolesAllowed("project-view")
-    public List<Post> getChecklistItemsByTaskId(UUID taskId) {
-        return postService.getChecklistItemsByTask(taskId);
+        ProjectMember m =  addProjectMember(projectId, userId, ProjectMemberRole.OWNER);
     }
 
     @RolesAllowed("project-update")
