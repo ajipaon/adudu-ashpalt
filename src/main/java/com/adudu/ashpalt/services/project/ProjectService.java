@@ -268,6 +268,11 @@ public class ProjectService {
         return postService.createPost(task);
     }
 
+    @RolesAllowed("project-update")
+    public Post updateTask(Post task) {
+        return postService.updatePost(task);
+    }
+
     @RolesAllowed("project-delete")
     public void deleteTask(UUID id) {
         postService.deletePost(id);

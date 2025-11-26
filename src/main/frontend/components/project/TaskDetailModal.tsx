@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Dialog } from '@vaadin/react-components/Dialog';
-import { ProjectService, PostService } from 'Frontend/generated/endpoints';
+import { ProjectService , PostMetaService} from 'Frontend/generated/endpoints';
 import Post from 'Frontend/generated/com/adudu/ashpalt/models/project/Post';
 import Project from 'Frontend/generated/com/adudu/ashpalt/models/project/Project';
 import { X, Plus, Share2 } from 'lucide-react';
@@ -57,8 +57,6 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
     const [customFields, setCustomFields] = useState<CustomField[]>([]);
     const [dueDate, setDueDate] = useState<string>('');
     const [priority, setPriority] = useState<string>('medium');
-    const [assignees, setAssignees] = useState<string[]>([]);
-    const [newAssignee, setNewAssignee] = useState('');
     const [itemColumnList, setItemColumnList] = useState<ItemColumnProps[]>([])
 
     useEffect(() => {
@@ -86,7 +84,7 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
                 setChecklistItems(filteredItems);
                 calculateProgress(filteredItems);
 
-                const taskLabels = await PostService.getLabels(id);
+                const taskLabels = await PostMetaService.getLabels(id);
                 setLabels((taskLabels || []).filter((label): label is string => label !== undefined));
 
                 if (data.task.postContent && data.task.postContentType === 'json') {
@@ -94,7 +92,6 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
                         const content = JSON.parse(data.task.postContent);
                         setDueDate(content.dueDate || '');
                         setPriority(content.priority || 'medium');
-                        setAssignees(content.assignees || []);
                         setCustomFields(content.customFields || []);
                     } catch (e) {
                         console.error('Error parsing content', e);
@@ -128,7 +125,7 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
         if (!taskToSave) return;
 
         try {
-            const savedTask = await ProjectService.saveTask(taskToSave);
+            const savedTask = await ProjectService.updateTask(taskToSave);
             if (savedTask) {
                 setEditedTask(savedTask);
                 setTaskData(prev => prev ? { ...prev, task: savedTask } : null);
@@ -151,7 +148,6 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
             description: content.description || "",
             dueDate,
             priority,
-            assignees,
             customFields,
             ...content,
         };
@@ -216,7 +212,7 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
 
         if (editedTask?.id) {
             try {
-                await PostService.setLabels(editedTask.id, updatedLabels);
+                // await PostMetaService.setLabels(editedTask.id, updatedLabels);
             } catch (error) {
                 console.error("Failed to save labels", error);
             }
@@ -229,26 +225,14 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
 
         if (editedTask?.id) {
             try {
-                await PostService.setLabels(editedTask.id, updatedLabels);
+                // await PostMetaService.setLabels(editedTask.id, updatedLabels);
             } catch (error) {
                 console.error("Failed to save labels", error);
             }
         }
     };
 
-    const addAssignee = () => {
-        if (!newAssignee.trim() || assignees.includes(newAssignee)) return;
-        const updated = [...assignees, newAssignee];
-        setAssignees(updated);
-        setNewAssignee('');
-        updateTaskMetadata();
-    };
 
-    const removeAssignee = (assigneeToRemove: string) => {
-        const updated = assignees.filter(a => a !== assigneeToRemove);
-        setAssignees(updated);
-        updateTaskMetadata();
-    };
 
 
     const addChecklistItem = async () => {
@@ -338,7 +322,6 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
             const byteArray = Array.from(bytes);
 
             const path = await ProjectService.uploadFile(byteArray, file.name);
-            await PostService.setCoverImage(taskId, path);
             loadTask(taskId);
         } catch (error) {
             console.error("Failed to upload file", error);
@@ -446,13 +429,10 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
                             </div>
                             <LabelTask labels={labels} addLabel={addLabel} newLabel={newLabel} removeLabel={removeLabel} setNewLabel={setNewLabel}/>
 
-                            <AssigneesTask
-                                assignees={assignees}
-                                addAssignee={addAssignee}
-                                newAssignee={newAssignee}
-                                removeAssignee={removeAssignee}
-                                setNewAssignee={setNewAssignee}
-                            />
+                            {taskData?.project?.id && (
+                                <AssigneesTask postId={taskId} projectId={taskData?.project?.id}/>
+                            )}
+
 
                             <DescriptionTask
                                 task={task}

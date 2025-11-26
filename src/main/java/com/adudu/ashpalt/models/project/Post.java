@@ -42,9 +42,6 @@ public class Post {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<PostMeta> metadata = new ArrayList<>();
-
     public UUID getId() {
         return id;
     }
@@ -131,14 +128,6 @@ public class Post {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public List<PostMeta> getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(List<PostMeta> metadata) {
-        this.metadata = metadata;
     }
 
     @PreUpdate
