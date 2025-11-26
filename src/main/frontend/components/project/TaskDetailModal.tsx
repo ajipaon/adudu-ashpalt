@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import {useEffect, useState, useRef, useCallback} from 'react';
 import { Dialog } from '@vaadin/react-components/Dialog';
 import { ProjectService , PostMetaService} from 'Frontend/generated/endpoints';
 import Post from 'Frontend/generated/com/adudu/ashpalt/models/project/Post';
@@ -10,6 +10,8 @@ import PriorityTask from "Frontend/components/project/PriorityTask";
 import LabelTask from "Frontend/components/project/LabelTask";
 import AssigneesTask from "Frontend/components/project/AssigneesTask";
 import DescriptionTask from "Frontend/components/project/DescriptionTask";
+import PostMeta from "Frontend/generated/com/adudu/ashpalt/models/project/PostMeta";
+import {PriorityColors} from "Frontend/components/project/dto/projectDto";
 
 type TaskWithContext = {
     task?: Post;
@@ -49,15 +51,26 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
     const [isEditingDesc, setIsEditingDesc] = useState(false);
     const [editedTask, setEditedTask] = useState<Post | null>(null);
     const [checklistItems, setChecklistItems] = useState<Post[]>([]);
-    const [labels, setLabels] = useState<string[]>([]);
-    const [newLabel, setNewLabel] = useState('');
     const [progress, setProgress] = useState(0);
     const [isEditingChecklist, setIsEditingChecklist] = useState(false);
     const [newChecklistText, setNewChecklistText] = useState('');
     const [customFields, setCustomFields] = useState<CustomField[]>([]);
     const [dueDate, setDueDate] = useState<string>('');
-    const [priority, setPriority] = useState<string>('medium');
+    const [priority, setPriority] = useState<PostMeta | null>(null);
     const [itemColumnList, setItemColumnList] = useState<ItemColumnProps[]>([])
+
+
+    const loadDataPriority = useCallback(() => {
+        PostMetaService.getMeta(taskId!!, "priority")
+            .then((value) => {
+                const filtered = (value ?? []).filter((v): v is PostMeta => !!v);
+                setPriority(filtered[0] ?? null);
+            })
+            .catch((error) => {
+                console.error('Failed to load assignees:', error);
+                setPriority(null);
+            });
+    }, [taskId]);
 
     useEffect(() => {
         if (taskId && isOpen) {
@@ -67,6 +80,7 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
                 value: e.id,
                 disabled: false,
             }));
+            loadDataPriority()
             setItemColumnList(mapped);
         }
     }, [taskId, isOpen]);
@@ -83,9 +97,6 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
                 const filteredItems = (items || []).filter((item): item is Post => item !== undefined);
                 setChecklistItems(filteredItems);
                 calculateProgress(filteredItems);
-
-                const taskLabels = await PostMetaService.getLabels(id);
-                setLabels((taskLabels || []).filter((label): label is string => label !== undefined));
 
                 if (data.task.postContent && data.task.postContentType === 'json') {
                     try {
@@ -175,13 +186,6 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
                     };
                     break;
 
-                case "assignees":
-                    updatedContent = {
-                        ...updatedContent,
-                        assignees: props.value,
-                    };
-                    break;
-
                 case "customFields":
                     updatedContent = {
                         ...updatedContent,
@@ -203,37 +207,6 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
         setEditedTask(updatedTask);
         await handleSave(updatedTask);
     };
-
-    const addLabel = async () => {
-        if (!newLabel.trim()) return;
-        const updatedLabels = [...labels, newLabel];
-        setLabels(updatedLabels);
-        setNewLabel('');
-
-        if (editedTask?.id) {
-            try {
-                // await PostMetaService.setLabels(editedTask.id, updatedLabels);
-            } catch (error) {
-                console.error("Failed to save labels", error);
-            }
-        }
-    };
-
-    const removeLabel = async (labelToRemove: string) => {
-        const updatedLabels = labels.filter(l => l !== labelToRemove);
-        setLabels(updatedLabels);
-
-        if (editedTask?.id) {
-            try {
-                // await PostMetaService.setLabels(editedTask.id, updatedLabels);
-            } catch (error) {
-                console.error("Failed to save labels", error);
-            }
-        }
-    };
-
-
-
 
     const addChecklistItem = async () => {
         if (!editedTask || !taskId || !newChecklistText.trim()) return;
@@ -333,13 +306,6 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
 
     const task = editedTask || taskData?.task;
 
-    const priorityColors = {
-        low: 'bg-blue-600',
-        medium: 'bg-yellow-600',
-        high: 'bg-orange-600',
-        critical: 'bg-red-600'
-    };
-
     return (
         <Dialog
             opened={isOpen}
@@ -358,11 +324,14 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
                     }));
                     await ProjectService.moveTask(editedTask?.id, e.target.value!, editedTask?.postOrder);
             }} />
-                <div className="flex items-center gap-2">
-                    <span className={`px-3 py-1 rounded text-sm font-medium text-white ${priorityColors[priority as keyof typeof priorityColors] || 'bg-slate-700'}`}>
-                     {priority.charAt(0).toUpperCase() + priority.slice(1)} Priority
+                {priority && (
+                    <div className="flex items-center gap-2">
+                         <span className={`px-3 py-1 rounded text-sm font-medium text-white ${PriorityColors[priority?.metaValue!!] ?? "bg-slate-700"}`}>
+                           {priority.metaValue?.toUpperCase() || "DEFAULT"}
                     </span>
-                </div>
+                    </div>
+                )}
+
             <h2
                 className="draggable"
                 style={{
@@ -427,7 +396,7 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
                                     Created: {task.createdAt ? new Date(task.createdAt).toLocaleDateString() : 'N/A'}
                                 </div>
                             </div>
-                            <LabelTask labels={labels} addLabel={addLabel} newLabel={newLabel} removeLabel={removeLabel} setNewLabel={setNewLabel}/>
+                            <LabelTask postId={taskId} />
 
                             {taskData?.project?.id && (
                                 <AssigneesTask postId={taskId} projectId={taskData?.project?.id}/>
@@ -536,7 +505,7 @@ export default function TaskDetailModal({ taskId, isOpen, onClose, columns}: Tas
                         <div className="w-full md:w-96 bg-slate-700 border-l border-gray-700 p-6 rounded-lg overflow-y-auto flex flex-col">
                             <div className="mb-6 space-y-2">
                                 <h3 className="text-sm font-semibold text-gray-400 uppercase mb-3">Actions</h3>
-                                <PriorityTask priority={priority} setPriority={setPriority} updateTaskMetadata={updateTaskMetadata} />
+                                <PriorityTask taskId={taskId} priority={priority!!}  loadDataPriority={loadDataPriority}/>
                             </div>
                             <CommentTask id={taskId}/>
                             <div className="border-t border-gray-700 my-4"></div>

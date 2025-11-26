@@ -7,6 +7,7 @@ import com.vaadin.hilla.BrowserCallable;
 import jakarta.annotation.security.PermitAll;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -27,21 +28,23 @@ public class PostMetaService {
 
     @Transactional
     public void saveMeta(PostMeta meta) {
-        postMetaRepository.save(meta);
+        switch (meta.getMetaKey()) {
+            case "priority":
+                // memastikan meta key untuk priority hanya ada 1
+                Optional<PostMeta> existingMeta = postMetaRepository.findByPostIdAndMetaKey(meta.getPostId(), meta.getMetaKey());
+                if(existingMeta.isPresent()){
+                    updateMeta(meta.getPostId(), meta.getMetaKey(), meta.getMetaValue());
+                }
+
+            default:
+                postMetaRepository.save(meta);
+        }
+
     }
 
     public List<PostMeta> getMeta(UUID taskId, String key) {
-        return getMetaByKeyPrefix(taskId, key).stream().toList();
+        return postMetaRepository.findByPostIdAndMetaKeyStartingWith(taskId, key);
     }
-
-//    private PostMeta addMeta(UUID postId, String metaKey, String metaValue, MetaType metaType) {
-//        PostMeta meta = new PostMeta();
-//        meta.setPostId(postId);
-//        meta.setMetaKey(metaKey);
-//        meta.setMetaValue(metaValue);
-//        meta.setMetaType(metaType);
-//        return postMetaRepository.save(meta);
-//    }
 
     public void updateMeta(UUID postId, String metaKey, String metaValue) {
         Optional<PostMeta> existingMeta = postMetaRepository.findByPostIdAndMetaKey(postId, metaKey);
@@ -58,7 +61,8 @@ public class PostMetaService {
     }
 
     @Transactional
-    public void deleteAllMeta(UUID postId) {
+    @Async
+    protected void deleteAllMeta(UUID postId) {
         postMetaRepository.deleteByPostId(postId);
     }
 
@@ -71,8 +75,6 @@ public class PostMetaService {
                 .map(PostMeta::getMetaValue)
                 .collect(Collectors.toList());
     }
-
-
 
 
 }

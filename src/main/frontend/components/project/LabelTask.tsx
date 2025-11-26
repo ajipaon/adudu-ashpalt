@@ -1,15 +1,65 @@
 import {Plus, Tag, X} from "lucide-react";
+import MetaType from "Frontend/generated/com/adudu/ashpalt/models/project/MetaType";
+import {useCallback, useEffect, useState} from "react";
+import PostMeta from "Frontend/generated/com/adudu/ashpalt/models/project/PostMeta";
+import {PostMetaService} from "Frontend/generated/endpoints";
+
+
+const mKey = 'label';
+const metaType: MetaType = MetaType.TEXT;
 
 interface labelTaskProps{
-    labels: string[]
-    removeLabel: (arg0: string) => void
-    newLabel: string | ""
-    setNewLabel: (arg0: string) => void
-    addLabel: () => void
-
+    postId: string
 }
 
-export default function LabelTask({labels, removeLabel, newLabel, setNewLabel, addLabel}:labelTaskProps){
+export default function LabelTask({postId}:labelTaskProps){
+
+    const [newLabel, setNewLabel] = useState<string>("");
+    const [labels, setLabels] = useState<PostMeta[]>([]);
+
+    const loadData = useCallback(() => {
+        PostMetaService.getMeta(postId, mKey)
+            .then((value) => {
+                const filteredAssignees = (value || []).filter((assignee): assignee is PostMeta =>
+                    assignee !== undefined
+                );
+                setLabels(filteredAssignees);
+            })
+            .catch((error) => {
+                console.error('Failed to load assignees:', error);
+                setLabels([]);
+            });
+    }, [postId]);
+
+    useEffect(() => {
+        loadData()
+    }, [loadData]);
+
+    const removeLabel = (label: PostMeta) => {
+        PostMetaService.deleteMeta(label.id).then(() => {
+            loadData()
+        })
+    };
+
+    const addLabel = () => {
+
+        try{
+            const label :PostMeta = {
+                postId,
+                metaKey: mKey,
+                metaType,
+                metaValue: newLabel
+            }
+
+            PostMetaService.saveMeta(label).then(() => {
+                setNewLabel("")
+                loadData()
+            })
+        }catch (e: any){
+            console.error(e.message)
+        }
+    };
+
 
     return(
         <>
@@ -18,8 +68,8 @@ export default function LabelTask({labels, removeLabel, newLabel, setNewLabel, a
                     <Tag size={16} /> Labels
                 </label>
                 {labels.map((label, idx) => (
-                    <span key={idx} className="px-3 py-1 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors flex items-center gap-2 group cursor-pointer">
-                                            {label}
+                    <span key={idx} className="px-3 py-1 mx-1 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors flex items-center gap-2 group cursor-pointer">
+                                            {label?.metaValue || "N/A"}
                         <X size={14} onClick={() => removeLabel(label)} className="opacity-0 group-hover:opacity-100" />
                                         </span>
                 ))}

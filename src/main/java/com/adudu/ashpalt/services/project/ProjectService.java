@@ -6,10 +6,7 @@ import com.adudu.ashpalt.models.ProjectMemberRole;
 import com.adudu.ashpalt.models.User;
 import com.adudu.ashpalt.models.project.*;
 import com.adudu.ashpalt.repository.UserRepository;
-import com.adudu.ashpalt.repository.project.ProjectMemberRepository;
-import com.adudu.ashpalt.repository.project.ProjectRepository;
-import com.adudu.ashpalt.repository.project.CommentRepository;
-import com.adudu.ashpalt.repository.project.PostRepository;
+import com.adudu.ashpalt.repository.project.*;
 import com.adudu.ashpalt.security.AuthenticatedUser;
 import com.vaadin.hilla.BrowserCallable;
 import jakarta.annotation.security.PermitAll;
@@ -43,6 +40,9 @@ public class ProjectService {
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private PostMetaService postMetaService;
 
     @PermitAll
     public boolean canManageMembers(UUID projectId) {
@@ -176,6 +176,7 @@ public class ProjectService {
         List<Post> columns = postService.getColumnsByProject(id);
         for (Post column : columns) {
             postService.deletePost(column.getId());
+            postMetaService.deleteAllMeta(column.getId());
         }
 
         List<ProjectMember> members = projectMemberRepository.findByProjectId(id);
@@ -275,7 +276,9 @@ public class ProjectService {
 
     @RolesAllowed("project-delete")
     public void deleteTask(UUID id) {
+
         postService.deletePost(id);
+        postMetaService.deleteAllMeta(id);
     }
 
     @RolesAllowed("project-view")

@@ -6,6 +6,8 @@ import Post from 'Frontend/generated/com/adudu/ashpalt/models/project/Post';
 import { Button, TextField, Dialog } from '@vaadin/react-components';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import TaskDetailModal from '../../components/project/TaskDetailModal';
+import SummaryView from '../../components/project/SummaryView';
+import CalendarView from '../../components/project/CalendarView';
 type ColumnWithTasks = {
     id?: string;
     postTitle?: string;
@@ -27,6 +29,7 @@ export default function BoardView() {
     const [openMenuColumnId, setOpenMenuColumnId] = useState<string | null>(null);
     const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null);
     const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+    const [activeTab, setActiveTab] = useState<'summary' | 'timeline' | 'backlog' | 'board' | 'calendar'>('board');
 
     useEffect(() => {
         if (projectId) loadProject(projectId);
@@ -212,187 +215,257 @@ export default function BoardView() {
 
     return (
         <div className="flex flex-col h-screen overflow-hidden select-none"
-             style={{
-                 backgroundImage: 'url(/images/photo-background-1.jpg)',
-                 backgroundSize: 'cover',
-                 backgroundPosition: 'center'
-             }}
+            style={{
+                backgroundImage: 'url(/images/photo-background-1.jpg)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+            }}
         >
 
-            <div className="px-6 py-4 bg-white/10 text-white font-bold text-2xl border-b border-white/20">
-                {project.title}
+            <div className="backdrop-blur-md bg-white/20 border   shadow-lg text-white">
+                <div className="px-6 py-3 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded flex items-center justify-center font-bold text-lg">
+                        {project.title?.charAt(0).toUpperCase() || 'P'}
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-semibold">{project.title}</h1>
+                        {project.description && (
+                            <p className="text-sm text-gray-400">{project.description}</p>
+                        )}
+                    </div>
+                </div>
+
+                <div className="px-6 flex gap-1 border-t border-slate-700">
+                    <button
+                        onClick={() => setActiveTab('summary')}
+                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'summary' ? 'bg-slate-700 border-b-2 border-blue-500' : ''
+                            }`}
+                    >
+                        Summary
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('timeline')}
+                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'timeline' ? 'bg-slate-700 border-b-2 border-blue-500' : ''
+                            }`}
+                    >
+                        Timeline
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('backlog')}
+                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'backlog' ? 'bg-slate-700 border-b-2 border-blue-500' : ''
+                            }`}
+                    >
+                        Backlog
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('board')}
+                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'board' ? 'bg-slate-700 border-b-2 border-blue-500' : ''
+                            }`}
+                    >
+                        Board
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('calendar')}
+                        className={`px-4 py-3 text-sm font-medium hover:bg-slate-700 transition-colors ${activeTab === 'calendar' ? 'bg-slate-700 border-b-2 border-blue-500' : ''
+                            }`}
+                    >
+                        Calendar
+                    </button>
+                </div>
             </div>
 
-            <DragDropContext onDragEnd={onDragEnd}>
-                <div id="board-scroll" className="flex-1 overflow-x-auto whitespace-nowrap">
+            {activeTab === 'summary' && (
+                <SummaryView projectId={projectId!} />
+            )}
 
-                    <div className="flex gap-6 p-6 items-start">
+            {activeTab === 'board' && (
+                <DragDropContext onDragEnd={onDragEnd}>
+                    <div id="board-scroll" className="flex-1 overflow-x-auto whitespace-nowrap">
 
-                        {columns.map(col => (
-                            <div key={col.id} className="w-80 min-w-[20rem] bg-gray-100 rounded-xl shadow-lg flex flex-col relative">
+                        <div className="flex gap-6 p-6 items-start">
 
-                                <div className="p-4 border-b text-gray-700 font-bold flex justify-between items-center group">
-                                    <span>{col.postTitle}</span>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                            setMenuPosition({ x: rect.right + 10, y: rect.bottom });
-                                            setOpenMenuColumnId(openMenuColumnId === col.id ? null : col.id!);
-                                        }}
-                                        className="opacity-100 p-1 hover:bg-gray-300 rounded transition-all"
-                                        title="Column actions"
-                                    >
-                                        <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                                            <circle cx="12" cy="5" r="2" />
-                                            <circle cx="12" cy="12" r="2" />
-                                            <circle cx="12" cy="19" r="2" />
-                                        </svg>
-                                    </button>
+                            {columns.map(col => (
+                                <div key={col.id} className="w-80 min-w-[20rem] bg-gray-100 rounded-xl shadow-lg flex flex-col relative">
 
-                                    {openMenuColumnId === col.id && (
-                                        <div
-                                            className="fixed bg-slate-700 text-white rounded-lg  z-50 py-2 w-1/6"
-                                            style={{
-                                                left: `${menuPosition.x}px`,
-                                                top: `${menuPosition.y}px`
+                                    <div className="p-4 border-b text-gray-700 font-bold flex justify-between items-center group">
+                                        <span>{col.postTitle}</span>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                                setMenuPosition({ x: rect.right + 10, y: rect.bottom });
+                                                setOpenMenuColumnId(openMenuColumnId === col.id ? null : col.id!);
                                             }}
-                                            onClick={(e) => e.stopPropagation()}
+                                            className="opacity-100 p-1 hover:bg-gray-300 rounded transition-all"
+                                            title="Column actions"
                                         >
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedColumnId(col.id!);
-                                                    setIsTaskDialogOpen(true);
-                                                    setOpenMenuColumnId(null);
+                                            <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                                <circle cx="12" cy="5" r="2" />
+                                                <circle cx="12" cy="12" r="2" />
+                                                <circle cx="12" cy="19" r="2" />
+                                            </svg>
+                                        </button>
+
+                                        {openMenuColumnId === col.id && (
+                                            <div
+                                                className="fixed bg-slate-700 text-white rounded-lg  z-50 py-2 w-1/6"
+                                                style={{
+                                                    left: `${menuPosition.x}px`,
+                                                    top: `${menuPosition.y}px`
                                                 }}
-                                                className="w-full px-4 py-2 text-left hover:bg-gray-800 transition-colors"
+                                                onClick={(e) => e.stopPropagation()}
                                             >
-                                                Add card
-                                            </button>
-                                            <hr className="my-2 border-gray-700" />
-                                            <div className="w-full px-4 py-2 text-left">
-                                                <label className="text-sm text-left font-semibold text-gray-400 block">Move List</label>
-                                                <select
-                                                    value={col.postOrder}
-                                                    onChange={(e) => {
-                                                        handleMoveColumn(col.id!!, e.target.value)
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedColumnId(col.id!);
+                                                        setIsTaskDialogOpen(true);
+                                                        setOpenMenuColumnId(null);
                                                     }}
-                                                    className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    className="w-full px-4 py-2 text-left hover:bg-gray-800 transition-colors"
                                                 >
-                                                    {columns.map((cols, index) => {
+                                                    Add card
+                                                </button>
+                                                <hr className="my-2 border-gray-700" />
+                                                <div className="w-full px-4 py-2 text-left">
+                                                    <label className="text-sm text-left font-semibold text-gray-400 block">Move List</label>
+                                                    <select
+                                                        value={col.postOrder}
+                                                        onChange={(e) => {
+                                                            handleMoveColumn(col.id!!, e.target.value)
+                                                        }}
+                                                        className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    >
+                                                        {columns.map((cols, index) => {
 
-                                                        return (
-                                                            <option
-                                                                key={cols.id}
-                                                                value={cols.postOrder}
-                                                                disabled={col.postOrder === cols?.postOrder}
-                                                            >
-                                                                { index ===  cols?.postOrder ? cols?.postOrder + 1 : cols?.postOrder}
-                                                            </option>
-                                                        )
-                                                    })}
-
-                                                </select>
-                                            </div>
-                                            <hr className="my-2 border-gray-700" />
-                                            <button
-                                                onClick={() => handleDeleteColumn(col.id!)}
-                                                className="w-full px-4 py-2 text-left hover:bg-red-600 transition-colors text-red-400 hover:text-white"
-                                            >
-                                                Delete list
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <Droppable droppableId={col.id!}>
-                                    {(provided, snapshot) =>(
-                                        <div
-                                            ref={provided.innerRef}
-                                            {...provided.droppableProps}
-                                            className={`flex-1 p-3 overflow-y-auto ${snapshot.isDraggingOver ? 'bg-blue-50' : ''}`}
-                                        >
-                                            {col.tasks?.map((task, i) => (
-                                                <Draggable key={task.id} draggableId={task.id!} index={i}>
-                                                    {(provided, snap) => (
-                                                        <div
-                                                            ref={provided.innerRef}
-                                                            {...provided.draggableProps}
-                                                            {...provided.dragHandleProps}
-                                                            className="p-3 bg-white rounded-lg shadow mb-3 "
-                                                            onClick={() => setSelectedTaskId(task.id!)}
-                                                            style={provided.draggableProps.style}
-                                                        >
-                                                            <div className="flex justify-between items-center group border-b text-gray-700 font-bold group">
-                                                            {task.postTitle}
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                                                    setMenuPosition({ x: rect.right + 10, y: rect.bottom });
-                                                                    setOpenMenuTaskId(openMenuTaskId === task.id ? null : task.id!);
-                                                                }}
-                                                                className="opacity-100 p-1 hover:bg-gray-300 rounded transition-all"
-                                                                title="Column actions"
-                                                            >
-                                                                <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                                                                    <circle cx="12" cy="5" r="2" />
-                                                                    <circle cx="12" cy="12" r="2" />
-                                                                    <circle cx="12" cy="19" r="2" />
-                                                                </svg>
-                                                            </button>
-                                                            </div>
-                                                            { openMenuTaskId === task.id &&(
-                                                                <div
-                                                                    className="fixed bg-slate-700 text-white rounded-lg  z-50 py-2 max-w-56"
-                                                                    style={{
-                                                                        left: `${menuPosition.x}px`,
-                                                                        top: `${menuPosition.y}px`
-                                                                    }}
-                                                                    onClick={(e) => e.stopPropagation()}
+                                                            return (
+                                                                <option
+                                                                    key={cols.id}
+                                                                    value={cols.postOrder}
+                                                                    disabled={col.postOrder === cols?.postOrder}
                                                                 >
-                                                                    <hr className="my-2 border-gray-700" />
+                                                                    {index === cols?.postOrder ? cols?.postOrder + 1 : cols?.postOrder}
+                                                                </option>
+                                                            )
+                                                        })}
+
+                                                    </select>
+                                                </div>
+                                                <hr className="my-2 border-gray-700" />
+                                                <button
+                                                    onClick={() => handleDeleteColumn(col.id!)}
+                                                    className="w-full px-4 py-2 text-left hover:bg-red-600 transition-colors text-red-400 hover:text-white"
+                                                >
+                                                    Delete list
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <Droppable droppableId={col.id!}>
+                                        {(provided, snapshot) => (
+                                            <div
+                                                ref={provided.innerRef}
+                                                {...provided.droppableProps}
+                                                className={`flex-1 p-3 overflow-y-auto ${snapshot.isDraggingOver ? 'bg-blue-50' : ''}`}
+                                            >
+                                                {col.tasks?.map((task, i) => (
+                                                    <Draggable key={task.id} draggableId={task.id!} index={i}>
+                                                        {(provided, snap) => (
+                                                            <div
+                                                                ref={provided.innerRef}
+                                                                {...provided.draggableProps}
+                                                                {...provided.dragHandleProps}
+                                                                className="p-3 bg-white rounded-lg shadow mb-3 "
+                                                                onClick={() => setSelectedTaskId(task.id!)}
+                                                                style={provided.draggableProps.style}
+                                                            >
+                                                                <div className="flex justify-between items-center group border-b text-gray-700 font-bold group">
+                                                                    {task.postTitle}
                                                                     <button
-                                                                        onClick={() => handleDeleteTask(task.id!)}
-                                                                        className="w-full px-4 py-2 text-left hover:bg-red-600 transition-colors text-red-400 hover:text-white"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                                                            setMenuPosition({ x: rect.right + 10, y: rect.bottom });
+                                                                            setOpenMenuTaskId(openMenuTaskId === task.id ? null : task.id!);
+                                                                        }}
+                                                                        className="opacity-100 p-1 hover:bg-gray-300 rounded transition-all"
+                                                                        title="Column actions"
                                                                     >
-                                                                        Delete Task
+                                                                        <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                                                            <circle cx="12" cy="5" r="2" />
+                                                                            <circle cx="12" cy="12" r="2" />
+                                                                            <circle cx="12" cy="19" r="2" />
+                                                                        </svg>
                                                                     </button>
                                                                 </div>
-                                                            )}
-                                                        </div>
-                                                    )}
+                                                                {openMenuTaskId === task.id && (
+                                                                    <div
+                                                                        className="fixed bg-slate-700 text-white rounded-lg  z-50 py-2 max-w-56"
+                                                                        style={{
+                                                                            left: `${menuPosition.x}px`,
+                                                                            top: `${menuPosition.y}px`
+                                                                        }}
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    >
+                                                                        <hr className="my-2 border-gray-700" />
+                                                                        <button
+                                                                            onClick={() => handleDeleteTask(task.id!)}
+                                                                            className="w-full px-4 py-2 text-left hover:bg-red-600 transition-colors text-red-400 hover:text-white"
+                                                                        >
+                                                                            Delete Task
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
 
-                                                </Draggable>
-                                            ))}
-                                            {provided.placeholder}
-                                        </div>
-                                    )}
-                                </Droppable>
+                                                    </Draggable>
+                                                ))}
+                                                {provided.placeholder}
+                                            </div>
+                                        )}
+                                    </Droppable>
 
-                                <button
-                                    onClick={() => {
-                                        setSelectedColumnId(col.id!);
-                                        setIsTaskDialogOpen(true);
-                                    }}
-                                    className="p-3 text-sm text-gray-600 hover:bg-gray-200"
-                                >
-                                    + Add a card
-                                </button>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedColumnId(col.id!);
+                                            setIsTaskDialogOpen(true);
+                                        }}
+                                        className="p-3 text-sm text-gray-600 hover:bg-gray-200"
+                                    >
+                                        + Add a card
+                                    </button>
 
-                            </div>
-                        ))}
+                                </div>
+                            ))}
 
-                        <button
-                            onClick={() => setIsColumnDialogOpen(true)}
-                            className="w-40 h-12 bg-slate-700 text-white rounded-xl border-white/30"
-                        >
-                            + Add list
-                        </button>
+                            <button
+                                onClick={() => setIsColumnDialogOpen(true)}
+                                className="w-40 h-12 bg-slate-700 text-white rounded-xl border-white/30"
+                            >
+                                + Add list
+                            </button>
+                        </div>
+
                     </div>
+                </DragDropContext>
+            )}
 
+            {activeTab === 'timeline' && (
+                <div className="flex-1 flex items-center justify-center backdrop-blur-md bg-white/20 border shadow-lgtext-gray-400">
+                    Timeline view - Coming soon
                 </div>
-            </DragDropContext>
+            )}
+
+            {activeTab === 'backlog' && (
+                <div className="flex-1 flex items-center justify-center backdrop-blur-md bg-white/20 border shadow-lg">
+                    Backlog view - Coming soon
+                </div>
+            )}
+
+            {activeTab === 'calendar' && (
+                <CalendarView projectId={projectId!} />
+            )}
 
             <Dialog headerTitle="New Column" opened={isColumnDialogOpen} onOpenedChanged={(e) => setIsColumnDialogOpen(e.detail.value)}>
                 <div className="p-3 flex flex-col gap-3">

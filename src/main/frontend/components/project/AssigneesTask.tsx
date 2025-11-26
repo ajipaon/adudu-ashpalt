@@ -1,18 +1,18 @@
-import {Plus, Users, X} from "lucide-react";
-import {useCallback, useEffect, useState} from "react";
-import {PostMetaService, ProjectService} from 'Frontend/generated/endpoints';
+import { Plus, Users, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { PostMetaService, ProjectService } from 'Frontend/generated/endpoints';
 import PostMeta from "Frontend/generated/com/adudu/ashpalt/models/project/PostMeta";
 import MetaType from "Frontend/generated/com/adudu/ashpalt/models/project/MetaType";
 import ProjectMemberDTO from "Frontend/generated/com/adudu/ashpalt/services/project/ProjectService/ProjectMemberDTO";
 
 const mKey = 'assignee';
 const metaType: MetaType = MetaType.UUID
-interface AssigneesTaskProps{
+interface AssigneesTaskProps {
     postId: string
     projectId: string
 }
 
-export default function AssigneesTask({postId, projectId}: AssigneesTaskProps) {
+export default function AssigneesTask({ postId, projectId }: AssigneesTaskProps) {
     const [assignees, setAssignees] = useState<PostMeta[]>([]);
     const [newAssignee, setNewAssignee] = useState('');
     const [members, setMembers] = useState<ProjectMemberDTO[]>([])
@@ -81,7 +81,7 @@ export default function AssigneesTask({postId, projectId}: AssigneesTaskProps) {
     };
 
     const getMemberName = (memberId: string | null | undefined): string => {
-        if(!memberId){
+        if (!memberId) {
             return ""
         }
         const member = members.find(m => m.id === memberId);
