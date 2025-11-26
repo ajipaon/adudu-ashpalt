@@ -2,7 +2,6 @@ import {Plus, X} from "lucide-react";
 import {useCallback, useEffect, useState} from "react";
 import MetaType from "Frontend/generated/com/adudu/ashpalt/models/project/MetaType";
 import PostMeta from "Frontend/generated/com/adudu/ashpalt/models/project/PostMeta";
-import Post from "Frontend/generated/com/adudu/ashpalt/models/project/Post";
 import {PostMetaService} from "Frontend/generated/endpoints";
 
 

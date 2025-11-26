@@ -17,6 +17,8 @@ public class PostMeta {
     @Column(name = "post_id", nullable = false)
     private UUID postId;
 
+    private LocalDateTime createdAt;
+
     @NotBlank(message = "Meta key cannot be blank")
     @Column(name = "meta_key", nullable = false, length = 255)
     private String metaKey;
@@ -48,6 +50,14 @@ public class PostMeta {
 
     public void setPostId(UUID postId) {
         this.postId = postId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public String getMetaKey() {

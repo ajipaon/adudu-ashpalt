@@ -1,19 +1,29 @@
-import { useEffect, useState } from 'react';
-import { ProjectService } from 'Frontend/generated/endpoints';
-import { Dialog } from '@vaadin/react-components';
+import {useCallback, useEffect, useRef, useState} from 'react';
+import {DatePicker, Dialog} from '@vaadin/react-components';
+import { DatePickerElement } from '@vaadin/react-components/DatePicker';
 import { X, Plus } from 'lucide-react';
+import MetaType from "Frontend/generated/com/adudu/ashpalt/models/project/MetaType";
+import PostMeta from "Frontend/generated/com/adudu/ashpalt/models/project/PostMeta";
+import {PostMetaService} from "Frontend/generated/endpoints";
+import {dayNames, formatDateIso8601, monthNames, parseDateIso8601} from "Frontend/util/date";
 
 interface CalendarViewProps {
     projectId: string;
 }
 
-interface CalendarTask {
-    id: string;
+const mKey = 'calender';
+const metaType: MetaType = MetaType.JSON
+
+interface MetaValueCalenderProps{
     title: string;
+    description?: string;
     date: Date;
     color: string;
+    startTime: string;
+    endTime: string;
 }
 
+// parent untuk calender adalah projectId
 export default function CalendarView({ projectId }: CalendarViewProps) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<'week' | 'month'>('month');
@@ -24,31 +34,42 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
     const [newTaskPriority, setNewTaskPriority] = useState('medium');
     const [newTaskColor, setNewTaskColor] = useState('bg-blue-500');
     const [showTaskDetails, setShowTaskDetails] = useState(false);
-    const [tasksForSelectedDate, setTasksForSelectedDate] = useState<CalendarTask[]>([]);
+    const [tasksForSelectedDate, setTasksForSelectedDate] = useState<PostMeta[]>([]);
+    const datePickerRef = useRef<DatePickerElement>(null);
+    const [startFrom, setStartFrom] = useState<Date>(new Date())
 
     const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
+    const [tasks, setTasks] = useState<PostMeta[]>([]);
 
-    const [tasks, setTasks] = useState<CalendarTask[]>([
-        { id: '1', title: 'iOS design in depth', date: new Date(currentYear, currentMonth, 1), color: 'bg-orange-500' },
-        { id: '2', title: 'How We Structure Our CSS', date: new Date(currentYear, currentMonth, 6), color: 'bg-yellow-500' },
-        { id: '3', title: 'How to use Trello like a Pro', date: new Date(currentYear, currentMonth, 7), color: 'bg-green-500' },
-        { id: '4', title: 'How to Structure an Editorial Calendar', date: new Date(currentYear, currentMonth, 9), color: 'bg-blue-500' },
-        { id: '5', title: 'Create Cards via Email', date: new Date(currentYear, currentMonth, 13), color: 'bg-green-500' },
-        { id: '6', title: 'Holiday Campaign Wrap Up Stats', date: new Date(currentYear, currentMonth, 14), color: 'bg-blue-500' },
-        { id: '7', title: 'Being Accountability: Basing Resolutions in Resolutions', date: new Date(currentYear, currentMonth, 15), color: 'bg-blue-500' },
-        { id: '8', title: 'Trello for Charitable Donations', date: new Date(currentYear, currentMonth, 16), color: 'bg-purple-500' },
-        { id: '9', title: 'Kickstarter case study', date: new Date(currentYear, currentMonth, 19), color: 'bg-orange-500' },
-        { id: '10', title: 'Wedding Planning With Trello', date: new Date(currentYear, currentMonth, 22), color: 'bg-purple-500' },
-        { id: '11', title: 'Common Questions', date: new Date(currentYear, currentMonth, 26), color: 'bg-green-500' },
-        { id: '12', title: 'Using Multiple Boards for a Super Effective Workflow', date: new Date(currentYear, currentMonth, 27), color: 'bg-blue-500' },
-    ]);
+    const loadCalendar = useCallback(() => {
+        PostMetaService.getMeta(projectId!!, mKey)
+            .then((value) => {
+                const filtered = (value ?? []).filter((v): v is PostMeta => !!v);
+                setTasks(filtered || []);
+            })
+            .catch((error) => {
+                console.error('Failed to load assignees:', error);
+                setTasks([]);
+            });
 
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'];
+    }, [projectId]);
 
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    useEffect(() => {
+        const datePicker = datePickerRef.current;
+        if (datePicker) {
+            datePicker.i18n = {
+                ...datePicker.i18n,
+                formatDate: formatDateIso8601,
+                parseDate: parseDateIso8601,
+            };
+        }
+    }, []);
+
+    useEffect(() => {
+        loadCalendar()
+    }, []);
+
+
 
     const getDaysInMonth = (date: Date) => {
         const year = date.getFullYear();
@@ -82,7 +103,8 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
     const getTasksForDate = (date: Date | null) => {
         if (!date) return [];
         return tasks.filter(task => {
-            const taskDate = new Date(task.date);
+            const content: MetaValueCalenderProps  = JSON.parse(task.metaValue!!);
+            const taskDate = new Date(content.date);
             return taskDate.getDate() === date.getDate() &&
                 taskDate.getMonth() === date.getMonth() &&
                 taskDate.getFullYear() === date.getFullYear();
@@ -120,16 +142,22 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
     const handleCreateTask = async () => {
         if (!newTaskTitle || !selectedDate) return;
 
-        const newTask: CalendarTask = {
-            id: Date.now().toString(),
+        const newTask: MetaValueCalenderProps = {
             title: newTaskTitle,
             date: selectedDate,
-            color: newTaskColor
+            color: newTaskColor,
+            description: newTaskDescription
         };
+        const newMeta: PostMeta = {
+            postId: projectId,
+            metaKey: mKey,
+            metaType,
+            metaValue: JSON.stringify(newTask)
+        };
+        await PostMetaService.saveMeta(newMeta);
 
-        setTasks([...tasks, newTask]);
+        setTasks([...tasks, newMeta]);
 
-        // Reset form
         setNewTaskTitle('');
         setNewTaskDescription('');
         setNewTaskPriority('medium');
@@ -152,40 +180,7 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
 
     return (
         <div className="flex flex-1 bg-white overflow-hidden">
-            {/* Main Calendar Area */}
             <div className="flex-1 overflow-auto">
-                {/* Header */}
-                <div className="bg-orange-500 text-white px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <h2 className="text-xl font-semibold">Team Calendar</h2>
-                        <div className="flex items-center gap-2">
-                            <button className="p-2 hover:bg-orange-600 rounded">
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-                                </svg>
-                            </button>
-                            <span className="text-sm">Travidex, LLC</span>
-                            <button className="p-2 hover:bg-orange-600 rounded">
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                                </svg>
-                            </button>
-                            <span className="text-sm">Team Visible</span>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <button className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                            </svg>
-                            Calendar
-                        </button>
-                        <button className="px-4 py-2 hover:bg-orange-600 rounded">
-                            Share
-                        </button>
-                    </div>
-                </div>
-
                 <div className="px-6 py-4 border-b flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
@@ -234,7 +229,6 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                             </div>
                         ))}
 
-                        {/* Calendar Days */}
                         {days.map((date, index) => {
                             const dayTasks = getTasksForDate(date);
                             const isOtherMonth = !isCurrentMonth(date);
@@ -256,21 +250,23 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                                         )}
                                     </div>
                                     <div className="space-y-1">
-                                        {dayTasks.map(task => (
-                                            <div
-                                                key={task.id}
-                                                className="bg-white rounded shadow-sm p-2 border-l-4 hover:shadow-md transition-shadow"
-                                                style={{ borderLeftColor: task.color.replace('bg-', '#') }}
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <div className="flex items-start gap-2">
-                                                    <div className={`w-8 h-1 rounded ${task.color} mt-1`}></div>
-                                                    <div className="flex-1 text-xs text-gray-700 line-clamp-2">
-                                                        {task.title}
+                                        {dayTasks.map(task => {
+                                            const content: MetaValueCalenderProps = JSON.parse(task.metaValue!!)
+                                            return(
+                                                <div
+                                                    key={task.id}
+                                                    className="bg-white rounded shadow-sm p-2 border-l-4 hover:shadow-md transition-shadow"
+                                                    style={{ borderLeftColor: content.color.replace('bg-', '#') }}
+                                                    onClick={() => handleDateClick(date)}
+                                                >
+                                                    <div className="flex items-start gap-2">
+                                                        <div className={`w-8 h-1 rounded ${content.color} mt-1`}></div>
+                                                        <div className="flex-1 text-xs text-gray-700 line-clamp-2">
+                                                            {content.title}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            )})}
                                     </div>
                                 </div>
                             );
@@ -300,25 +296,25 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                             </p>
 
                             <div className="space-y-3">
-                                {tasksForSelectedDate.map(task => (
-                                    <div
+                                {tasksForSelectedDate.map(task => {
+                                    const content: MetaValueCalenderProps = JSON.parse(task.metaValue!!)
+                                   return (
+                                        <div
                                         key={task.id}
                                         className="bg-white rounded-lg shadow-sm p-4 border-l-4 hover:shadow-md transition-shadow cursor-pointer"
-                                        style={{ borderLeftColor: task.color.replace('bg-', '#') }}
+                                        style={{ borderLeftColor: content.color.replace('bg-', '#') }}
                                     >
                                         <div className="flex items-start gap-3">
-                                            <div className={`w-3 h-3 rounded-full ${task.color} mt-1 flex-shrink-0`}></div>
+                                            <div className={`w-3 h-3 rounded-full ${content.color} mt-1 flex-shrink-0`}></div>
                                             <div className="flex-1">
                                                 <h4 className="text-sm font-medium text-gray-800 mb-1">
-                                                    {task.title}
+                                                    {content.title}
                                                 </h4>
-                                                <p className="text-xs text-gray-500">
-                                                    ID: {task.id}
-                                                </p>
+                                                {content.description}
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+                                )})}
                             </div>
                         </div>
 
@@ -337,8 +333,7 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                 opened={isDialogOpen}
                 onOpenedChanged={(e) => setIsDialogOpen(e.detail.value)}
             >
-                <div className="p-6 space-y-4">
-                    {/* Task Title */}
+                <div className="p-6 space-y-8">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Task Title *
@@ -364,8 +359,6 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                         />
                     </div>
-
-                    {/* Priority */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Priority
@@ -382,7 +375,15 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                         </select>
                     </div>
 
-                    {/* Color Label */}
+                    <div>
+                        <DatePicker
+                            value={startFrom.toString()}
+                            ref={datePickerRef}
+                            label="Select Date"
+                            helperText="Start from"
+                        />
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Label Color
@@ -399,7 +400,6 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                         </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button
                             onClick={() => setIsDialogOpen(false)}
