@@ -3,7 +3,7 @@ import { Dialog, TimePicker } from '@vaadin/react-components';
 import { X, Plus } from 'lucide-react';
 import MetaType from "Frontend/generated/com/adudu/ashpalt/models/project/MetaType";
 import PostMeta from "Frontend/generated/com/adudu/ashpalt/models/project/PostMeta";
-import { PostMetaService } from "Frontend/generated/endpoints";
+import { PostMetaService, ProjectService } from "Frontend/generated/endpoints";
 import { dayNames, monthNames } from "Frontend/util/date";
 
 interface CalendarViewProps {
@@ -22,6 +22,7 @@ interface MetaValueCalenderProps {
     endTime: string;
     recurrenceType?: 'single' | 'range' | 'daily';
     endDate?: Date;
+    memberIds?: string[];
 }
 
 // parent untuk calender adalah projectId
@@ -41,6 +42,8 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
     const [tasksForSelectedDate, setTasksForSelectedDate] = useState<PostMeta[]>([]);
     const [recurrenceType, setRecurrenceType] = useState<'single' | 'range' | 'daily'>('single');
     const [endDate, setEndDate] = useState<Date | null>(null);
+    const [projectMembers, setProjectMembers] = useState<any[]>([]);
+    const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
 
     const [tasks, setTasks] = useState<PostMeta[]>([]);
 
@@ -59,8 +62,14 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
 
 
     useEffect(() => {
-        loadCalendar()
-    }, []);
+        loadCalendar();
+        ProjectService.getProjectMembers(projectId).then((members) => {
+            setProjectMembers(members || []);
+        }).catch((error) => {
+            console.error('Failed to load project members:', error);
+            setProjectMembers([]);
+        });
+    }, [loadCalendar, projectId]);
 
 
 
@@ -100,12 +109,9 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
             const taskDate = new Date(content.date);
             const recurrence = content.recurrenceType || 'single';
 
-            // Daily recurring tasks appear on all dates
             if (recurrence === 'daily') {
                 return true;
             }
-
-            // Date range tasks appear between start and end date
             if (recurrence === 'range' && content.endDate) {
                 const taskEndDate = new Date(content.endDate);
                 const checkDate = new Date(date);
@@ -117,8 +123,6 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
 
                 return checkDate >= startDate && checkDate <= endDateNormalized;
             }
-
-            // Single day tasks (default behavior)
             return taskDate.getDate() === date.getDate() &&
                 taskDate.getMonth() === date.getMonth() &&
                 taskDate.getFullYear() === date.getFullYear();
@@ -155,8 +159,6 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
 
     const handleCreateTask = async () => {
         if (!newTaskTitle || !selectedDate) return;
-
-        // Validate end date for range type
         if (recurrenceType === 'range' && (!endDate || endDate < selectedDate)) {
             alert('End date must be after or equal to start date');
             return;
@@ -170,7 +172,8 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
             startTime: isFullDay ? '' : newTaskStartTime,
             endTime: isFullDay ? '' : newTaskEndTime,
             recurrenceType: recurrenceType,
-            endDate: recurrenceType === 'range' ? endDate || undefined : undefined
+            endDate: recurrenceType === 'range' ? endDate || undefined : undefined,
+            memberIds: selectedMemberIds.length > 0 ? selectedMemberIds : undefined
         };
         const newMeta: PostMeta = {
             postId: projectId,
@@ -191,6 +194,7 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
         setIsFullDay(false);
         setRecurrenceType('single');
         setEndDate(null);
+        setSelectedMemberIds([]);
         setIsDialogOpen(false);
         setShowTaskDetails(false);
     };
@@ -198,6 +202,21 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
     const handleCreateNewTask = () => {
         setShowTaskDetails(false);
         setIsDialogOpen(true);
+    };
+
+    const handleDeleteTask = async (taskId: string | undefined) => {
+        if (!taskId) return;
+        const isDelete = window.confirm('Are you sure you want to delete this task?');
+        if (!isDelete) return;
+
+        try {
+            await PostMetaService.deleteMeta(taskId as any);
+            setTasks(tasks.filter(t => t.id !== taskId));
+            setTasksForSelectedDate(tasksForSelectedDate.filter(t => t.id !== taskId));
+        } catch (error) {
+            console.error('Failed to delete task:', error);
+            alert('Failed to delete task');
+        }
     };
 
     const formatDate = (date: Date | null) => {
@@ -331,7 +350,7 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                                     return (
                                         <div
                                             key={task.id}
-                                            className="bg-white rounded-lg shadow-sm p-4 border-l-4 hover:shadow-md transition-shadow cursor-pointer"
+                                            className="bg-white rounded-lg shadow-sm p-4 border-l-4 hover:shadow-md transition-shadow"
                                             style={{ borderLeftColor: content.color.replace('bg-', '#') }}
                                         >
                                             <div className="flex items-start gap-3">
@@ -340,8 +359,46 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                                                     <h4 className="text-sm font-medium text-gray-800 mb-1">
                                                         {content.title}
                                                     </h4>
-                                                    {content.description}
+                                                    {content.description && (
+                                                        <p className="text-xs text-gray-600 mb-2">{content.description}</p>
+                                                    )}
+                                                    {content.memberIds && content.memberIds.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1 mt-2">
+                                                            {content.memberIds.map((memberId) => {
+                                                                const member = projectMembers.find(m => m.userId === memberId);
+                                                                if (!member) return null;
+                                                                const initials = member.userName
+                                                                    .split(' ')
+                                                                    .map((n: string) => n[0])
+                                                                    .join('')
+                                                                    .toUpperCase()
+                                                                    .slice(0, 2);
+                                                                return (
+                                                                    <div
+                                                                        key={memberId}
+                                                                        className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs"
+                                                                        title={member.userEmail}
+                                                                    >
+                                                                        <div className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-semibold">
+                                                                            {initials}
+                                                                        </div>
+                                                                        <span>{member.userName}</span>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
                                                 </div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteTask(task.id);
+                                                    }}
+                                                    className="p-1 hover:bg-red-100 rounded transition-colors flex-shrink-0"
+                                                    title="Delete task"
+                                                >
+                                                    <X size={16} className="text-red-600" />
+                                                </button>
                                             </div>
                                         </div>
                                     )
@@ -364,155 +421,215 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                 opened={isDialogOpen}
                 onOpenedChanged={(e) => setIsDialogOpen(e.detail.value)}
             >
-                <div className="p-6 space-y-8">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Task Title *
-                        </label>
-                        <input
-                            type="text"
-                            value={newTaskTitle}
-                            onChange={(e) => setNewTaskTitle(e.target.value)}
-                            placeholder="Enter task title..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Description
-                        </label>
-                        <textarea
-                            value={newTaskDescription}
-                            onChange={(e) => setNewTaskDescription(e.target.value)}
-                            placeholder="Enter task description..."
-                            rows={4}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                            Recurrence Type
-                        </label>
-                        <div className="space-y-2">
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    name="recurrence"
-                                    value="single"
-                                    checked={recurrenceType === 'single'}
-                                    onChange={(e) => setRecurrenceType(e.target.value as 'single' | 'range' | 'daily')}
-                                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                />
-                                <span className="ml-2 text-sm text-gray-700">Single Day</span>
-                            </label>
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    name="recurrence"
-                                    value="range"
-                                    checked={recurrenceType === 'range'}
-                                    onChange={(e) => setRecurrenceType(e.target.value as 'single' | 'range' | 'daily')}
-                                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                />
-                                <span className="ml-2 text-sm text-gray-700">Date Range</span>
-                            </label>
-                            <label className="flex items-center">
-                                <input
-                                    type="radio"
-                                    name="recurrence"
-                                    value="daily"
-                                    checked={recurrenceType === 'daily'}
-                                    onChange={(e) => setRecurrenceType(e.target.value as 'single' | 'range' | 'daily')}
-                                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                />
-                                <span className="ml-2 text-sm text-gray-700">Every Day (Recurring)</span>
-                            </label>
-                        </div>
-
-                        {recurrenceType === 'range' && (
-                            <div className="mt-3">
+                <div className="p-6 w-[800px] max-w-full">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-6">
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    End Date
+                                    Task Title *
                                 </label>
                                 <input
-                                    type="date"
-                                    value={endDate ? endDate.toISOString().split('T')[0] : ''}
-                                    onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
-                                    min={selectedDate ? selectedDate.toISOString().split('T')[0] : ''}
+                                    type="text"
+                                    value={newTaskTitle}
+                                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                                    placeholder="Enter task title..."
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
-                        )}
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Priority
-                        </label>
-                        <select
-                            value={newTaskPriority}
-                            onChange={(e) => setNewTaskPriority(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                            <option value="urgent">Urgent</option>
-                        </select>
-                    </div>
-                    <div>
-                        <div className="flex items-center mb-3">
-                            <input
-                                type="checkbox"
-                                id="fullDay"
-                                checked={isFullDay}
-                                onChange={(e) => setIsFullDay(e.target.checked)}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <label htmlFor="fullDay" className="ml-2 text-sm font-medium text-gray-700">
-                                Full Day Event
-                            </label>
-                        </div>
-
-                        {!isFullDay && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <TimePicker
-                                    label="Start Time"
-                                    value={newTaskStartTime}
-                                    onValueChanged={(e) => setNewTaskStartTime(e.detail.value)}
-                                    step={60 * 30}
-                                    className="w-full"
-                                />
-                                <TimePicker
-                                    label="End Time"
-                                    value={newTaskEndTime}
-                                    onValueChanged={(e) => setNewTaskEndTime(e.detail.value)}
-                                    step={60 * 30}
-                                    className="w-full"
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Description
+                                </label>
+                                <textarea
+                                    value={newTaskDescription}
+                                    onChange={(e) => setNewTaskDescription(e.target.value)}
+                                    placeholder="Enter task description..."
+                                    rows={8}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                                 />
                             </div>
-                        )}
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Label Color
-                        </label>
-                        <div className="flex gap-2">
-                            {['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-orange-500', 'bg-red-500', 'bg-purple-500', 'bg-pink-500'].map(color => (
-                                <button
-                                    key={color}
-                                    onClick={() => setNewTaskColor(color)}
-                                    className={`w-8 h-8 rounded-full ${color} ${newTaskColor === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''
-                                        }`}
-                                />
-                            ))}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Priority
+                                </label>
+                                <select
+                                    value={newTaskPriority}
+                                    onChange={(e) => setNewTaskPriority(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Label Color
+                                </label>
+                                <div className="flex gap-2">
+                                    {['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-orange-500', 'bg-red-500', 'bg-purple-500', 'bg-pink-500'].map(color => (
+                                        <button
+                                            key={color}
+                                            onClick={() => setNewTaskColor(color)}
+                                            className={`w-8 h-8 rounded-full ${color} ${newTaskColor === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''
+                                                }`}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-3">
+                                    Recurrence Type
+                                </label>
+                                <div className="space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <label className="flex items-center">
+                                        <input
+                                            type="radio"
+                                            name="recurrence"
+                                            value="single"
+                                            checked={recurrenceType === 'single'}
+                                            onChange={(e) => setRecurrenceType(e.target.value as 'single' | 'range' | 'daily')}
+                                            className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                        />
+                                        <span className="ml-2 text-sm text-gray-700">Single Day</span>
+                                    </label>
+                                    <label className="flex items-center">
+                                        <input
+                                            type="radio"
+                                            name="recurrence"
+                                            value="range"
+                                            checked={recurrenceType === 'range'}
+                                            onChange={(e) => setRecurrenceType(e.target.value as 'single' | 'range' | 'daily')}
+                                            className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                        />
+                                        <span className="ml-2 text-sm text-gray-700">Date Range</span>
+                                    </label>
+                                    <label className="flex items-center">
+                                        <input
+                                            type="radio"
+                                            name="recurrence"
+                                            value="daily"
+                                            checked={recurrenceType === 'daily'}
+                                            onChange={(e) => setRecurrenceType(e.target.value as 'single' | 'range' | 'daily')}
+                                            className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                        />
+                                        <span className="ml-2 text-sm text-gray-700">Every Day (Recurring)</span>
+                                    </label>
+                                </div>
+
+                                {recurrenceType === 'range' && (
+                                    <div className="mt-3">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            End Date
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={endDate ? endDate.toISOString().split('T')[0] : ''}
+                                            onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
+                                            min={selectedDate ? selectedDate.toISOString().split('T')[0] : ''}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Time Settings
+                                </label>
+                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
+                                    <div className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            id="fullDay"
+                                            checked={isFullDay}
+                                            onChange={(e) => setIsFullDay(e.target.checked)}
+                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                        />
+                                        <label htmlFor="fullDay" className="ml-2 text-sm font-medium text-gray-700">
+                                            Full Day Event
+                                        </label>
+                                    </div>
+
+                                    {!isFullDay && (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <TimePicker
+                                                label="Start Time"
+                                                value={newTaskStartTime}
+                                                onValueChanged={(e) => setNewTaskStartTime(e.detail.value)}
+                                                step={60 * 30}
+                                                className="w-full"
+                                            />
+                                            <TimePicker
+                                                label="End Time"
+                                                value={newTaskEndTime}
+                                                onValueChanged={(e) => setNewTaskEndTime(e.detail.value)}
+                                                step={60 * 30}
+                                                className="w-full"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Assign Members
+                                </label>
+                                <div className="mb-2 flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedMemberIds(projectMembers.map(m => m.userId))}
+                                        className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                                    >
+                                        Select All
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedMemberIds([])}
+                                        className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                                    >
+                                        Deselect All
+                                    </button>
+                                </div>
+                                <div className="h-48 overflow-y-auto border border-gray-300 rounded-lg p-2 space-y-2 bg-white">
+                                    {projectMembers.length === 0 ? (
+                                        <p className="text-sm text-gray-500 text-center py-2">No members available</p>
+                                    ) : (
+                                        projectMembers.map((member) => (
+                                            <label key={member.userId} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedMemberIds.includes(member.userId)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setSelectedMemberIds([...selectedMemberIds, member.userId]);
+                                                        } else {
+                                                            setSelectedMemberIds(selectedMemberIds.filter(id => id !== member.userId));
+                                                        }
+                                                    }}
+                                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                />
+                                                <div className="flex-1">
+                                                    <div className="text-sm font-medium text-gray-700">{member.userName}</div>
+                                                    <div className="text-xs text-gray-500">{member.userEmail}</div>
+                                                </div>
+                                            </label>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4 border-t">
+                    <div className="flex justify-end gap-3 pt-6 border-t mt-6">
                         <button
                             onClick={() => setIsDialogOpen(false)}
                             className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
