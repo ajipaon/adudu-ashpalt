@@ -1,8 +1,14 @@
 package com.adudu.ashpalt.services.project;
 
 import com.adudu.ashpalt.models.project.MetaType;
+import com.adudu.ashpalt.models.project.Post;
 import com.adudu.ashpalt.models.project.PostMeta;
+import com.adudu.ashpalt.models.project.dto.PostmetaStatsDto;
 import com.adudu.ashpalt.repository.project.PostMetaRepository;
+import com.adudu.ashpalt.repository.project.PostRepository;
+import com.adudu.ashpalt.security.AuthenticatedUser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.hilla.BrowserCallable;
 import jakarta.annotation.security.PermitAll;
 import jakarta.transaction.Transactional;
@@ -22,6 +28,13 @@ public class PostMetaService {
     @Autowired
     private PostMetaRepository postMetaRepository;
 
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private AuthenticatedUser authenticatedUser;
+
     public Optional<PostMeta> getMetaByKeyPrefix(UUID postId, String metaKeyPrefix) {
         return postMetaRepository.findByPostIdAndMetaKey(postId, metaKeyPrefix);
     }
@@ -34,8 +47,12 @@ public class PostMetaService {
                 Optional<PostMeta> existingMeta = postMetaRepository.findByPostIdAndMetaKey(meta.getPostId(), meta.getMetaKey());
                 if(existingMeta.isPresent()){
                     updateMeta(meta.getPostId(), meta.getMetaKey(), meta.getMetaValue());
+                    break;
                 }
-
+            case "assignee":
+                if(meta.getAncestorId() == null){
+                    throw new IllegalArgumentException("data cannot processing");
+                }
             default:
                 postMetaRepository.save(meta);
         }
@@ -76,5 +93,33 @@ public class PostMetaService {
                 .collect(Collectors.toList());
     }
 
+    public List<PostMeta> getAssignedAgendas() {
+        UUID currentUserId = authenticatedUser.getUserId();
+        if (currentUserId == null) {
+            return List.of();
+        }
+        return postMetaRepository.findAssignedAgendas(currentUserId.toString());
+    }
+
+    public List<PostmetaStatsDto> getAssignedTasks() {
+        UUID currentUserId = authenticatedUser.getUserId();
+        if (currentUserId == null) {
+            return List.of();
+        }
+        return postRepository.findAssignedTasks(currentUserId.toString()).stream()
+                .map(p -> new PostmetaStatsDto(
+                        p.getId(),
+                        p.getPostType(),
+                        p.getPostParentTitle(),
+                        p.getPostTitle(),
+                        p.getPostContent(),
+                        p.getPostContentType(),
+                        p.getPostStatus(),
+                        p.getPostParent(),
+                        p.getPostOrder(),
+                        p.getAuthorId()
+                ))
+                .toList();
+    }
 
 }

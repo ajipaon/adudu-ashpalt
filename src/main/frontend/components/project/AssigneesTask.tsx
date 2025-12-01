@@ -57,6 +57,7 @@ export default function AssigneesTask({ postId, projectId }: AssigneesTaskProps)
                 postId,
                 metaKey: mKey,
                 metaType,
+                ancestorId: projectId,
                 metaValue: newAssignee.trim()
             };
 
@@ -84,13 +85,13 @@ export default function AssigneesTask({ postId, projectId }: AssigneesTaskProps)
         if (!memberId) {
             return ""
         }
-        const member = members.find(m => m.id === memberId);
+        const member = members.find(m => m.userId === memberId);
         if (!member) return memberId;
         return member.userName || member.userUsername || member.userEmail || memberId;
     };
 
     const getMemberDisplayName = (member: ProjectMemberDTO): string => {
-        return member.userName || member.userUsername || member.userEmail || member.id || '';
+        return member.userName || member.userUsername || member.userEmail || member.userId || '';
     };
 
     return (
@@ -114,7 +115,7 @@ export default function AssigneesTask({ postId, projectId }: AssigneesTaskProps)
                 >
                     <option value="" disabled={true}>Assignee</option>
                     {members.map((member) => (
-                        <option key={member.id} value={member.id}>
+                        <option key={member.userId} value={member.userId}>
                             {getMemberDisplayName(member)}
                         </option>
                     ))}

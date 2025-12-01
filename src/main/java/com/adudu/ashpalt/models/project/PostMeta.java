@@ -17,7 +17,10 @@ public class PostMeta {
     @Column(name = "post_id", nullable = false)
     private UUID postId;
 
-    private LocalDateTime createdAt;
+    @Column(name = "ancestor_id")
+    private UUID ancestorId;
+
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @NotBlank(message = "Meta key cannot be blank")
     @Column(name = "meta_key", nullable = false, length = 255)
@@ -50,6 +53,14 @@ public class PostMeta {
 
     public void setPostId(UUID postId) {
         this.postId = postId;
+    }
+
+    public UUID getAncestorId() {
+        return ancestorId;
+    }
+
+    public void setAncestorId(UUID ancestorId) {
+        this.ancestorId = ancestorId;
     }
 
     public LocalDateTime getCreatedAt() {

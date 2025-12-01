@@ -5,25 +5,14 @@ import MetaType from "Frontend/generated/com/adudu/ashpalt/models/project/MetaTy
 import PostMeta from "Frontend/generated/com/adudu/ashpalt/models/project/PostMeta";
 import { PostMetaService, ProjectService } from "Frontend/generated/endpoints";
 import { dayNames, monthNames } from "Frontend/util/date";
+import {MetaValueCalenderProps} from "Frontend/components/project/dto/projectDto";
 
 interface CalendarViewProps {
     projectId: string;
 }
 
-const mKey = 'calender';
+const mKey = 'calendar';
 const metaType: MetaType = MetaType.JSON
-
-interface MetaValueCalenderProps {
-    title: string;
-    description?: string;
-    date: Date;
-    color: string;
-    startTime: string;
-    endTime: string;
-    recurrenceType?: 'single' | 'range' | 'daily';
-    endDate?: Date;
-    memberIds?: string[];
-}
 
 // parent untuk calender adalah projectId
 export default function CalendarView({ projectId }: CalendarViewProps) {

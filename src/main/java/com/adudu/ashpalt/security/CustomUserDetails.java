@@ -3,6 +3,8 @@ package com.adudu.ashpalt.security;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.Collection;
 import java.util.UUID;
 
@@ -10,6 +12,7 @@ public class CustomUserDetails implements UserDetails {
     private final UUID userId;
     private final String username;
     private final String role;
+    @JsonIgnore
     private final String password;
     private final boolean enabled;
     private final boolean accountNonExpired;
@@ -18,9 +21,9 @@ public class CustomUserDetails implements UserDetails {
     private final Collection<? extends GrantedAuthority> authorities;
 
     public CustomUserDetails(UUID userId, String username, String password, String role,
-                             boolean enabled, boolean accountNonExpired,
-                             boolean credentialsNonExpired, boolean accountNonLocked,
-                             Collection<? extends GrantedAuthority> authorities) {
+            boolean enabled, boolean accountNonExpired,
+            boolean credentialsNonExpired, boolean accountNonLocked,
+            Collection<? extends GrantedAuthority> authorities) {
         this.userId = userId;
         this.username = username;
         this.password = password;
@@ -36,7 +39,7 @@ public class CustomUserDetails implements UserDetails {
         return userId;
     }
 
-    public String getRole(){
+    public String getRole() {
         return role;
     }
 
@@ -69,7 +72,6 @@ public class CustomUserDetails implements UserDetails {
     public boolean isCredentialsNonExpired() {
         return credentialsNonExpired;
     }
-
 
     @Override
     public boolean isEnabled() {

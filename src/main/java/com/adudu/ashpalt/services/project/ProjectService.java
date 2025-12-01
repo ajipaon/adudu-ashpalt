@@ -333,7 +333,6 @@ public class ProjectService {
     @RolesAllowed("project-create")
     public ProjectMember addProjectMember(UUID projectId, UUID userId, ProjectMemberRole role) {
 
-
         if (!authenticatedUser.getRoleName().equals("ROLE_SUPER_ADMIN") && !isProjectOwner(projectId, authenticatedUser.getUserId())) {
             throw new SecurityException("Only super admin or project owner can add members");
         }
@@ -388,7 +387,6 @@ public class ProjectService {
             User user = userRepository.findById(member.getUserId()).orElse(null);
             if (user != null) {
                 ProjectMemberDTO dto = new ProjectMemberDTO();
-                dto.id = member.getId();
                 dto.projectId = member.getProjectId();
                 dto.userId = member.getUserId();
                 dto.role = member.getRole().toString();
@@ -421,7 +419,6 @@ public class ProjectService {
             column.setPostOrder(i);
             postService.createPost(column);
         }
-        ProjectMember m =  addProjectMember(projectId, userId, ProjectMemberRole.OWNER);
     }
 
     @RolesAllowed("project-update")
@@ -470,7 +467,6 @@ public class ProjectService {
     }
 
     public static class ProjectMemberDTO {
-        public UUID id;
         public UUID projectId;
         public UUID userId;
         public String role;

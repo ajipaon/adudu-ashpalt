@@ -6,3 +6,15 @@ export const PriorityColors: Record<string, string> = {
     HIGH: "bg-orange-600",
     CRITICAL: "bg-red-600",
 };
+
+export interface MetaValueCalenderProps {
+    title: string;
+    description?: string;
+    date: Date;
+    color: string;
+    startTime: string;
+    endTime: string;
+    recurrenceType?: 'single' | 'range' | 'daily';
+    endDate?: Date;
+    memberIds?: string[];
+}

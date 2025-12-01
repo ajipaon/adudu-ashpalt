@@ -152,6 +152,7 @@ export default function BoardView() {
 
     async function handleAddTask() {
         if (!selectedColumnId || !newTaskTitle) return;
+        if (!project) return;
         const col = columns.find(c => c.id === selectedColumnId);
         if (!col) return;
 
@@ -159,7 +160,8 @@ export default function BoardView() {
             postType: 'task',
             postTitle: newTaskTitle,
             postParent: col.id,
-            postOrder: col.tasks?.length || 0
+            postOrder: col.tasks?.length || 0,
+            projectId: project.id
         });
 
         setNewTaskTitle('');

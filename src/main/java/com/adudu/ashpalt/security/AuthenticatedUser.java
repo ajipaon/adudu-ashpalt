@@ -1,6 +1,5 @@
 package com.adudu.ashpalt.security;
 
-import com.adudu.ashpalt.repository.UserRepository;
 import com.vaadin.flow.spring.security.AuthenticationContext;
 import java.util.Optional;
 import java.util.UUID;
@@ -8,7 +7,6 @@ import java.util.UUID;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -26,7 +24,7 @@ public class AuthenticatedUser {
 
         Authentication authentication = context.getAuthentication();
 
-        if (authentication.getPrincipal() instanceof CustomUserDetails){
+        if (authentication.getPrincipal() instanceof CustomUserDetails) {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             return Optional.of(userDetails);
         }
@@ -39,7 +37,7 @@ public class AuthenticatedUser {
 
         Authentication authentication = context.getAuthentication();
 
-        if (authentication.getPrincipal() instanceof CustomUserDetails){
+        if (authentication.getPrincipal() instanceof CustomUserDetails) {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             return userDetails.getUserId();
 
@@ -53,7 +51,7 @@ public class AuthenticatedUser {
 
         Authentication authentication = context.getAuthentication();
 
-        if (authentication.getPrincipal() instanceof CustomUserDetails){
+        if (authentication.getPrincipal() instanceof CustomUserDetails) {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             return userDetails.getRole();
 
@@ -61,12 +59,13 @@ public class AuthenticatedUser {
 
         return null;
     }
+
     public String getUserName() {
         SecurityContext context = SecurityContextHolder.getContext();
 
         Authentication authentication = context.getAuthentication();
 
-        if (authentication.getPrincipal() instanceof CustomUserDetails){
+        if (authentication.getPrincipal() instanceof CustomUserDetails) {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             return userDetails.getUsername();
 
@@ -74,8 +73,6 @@ public class AuthenticatedUser {
 
         return null;
     }
-
-
 
     public void logout() {
         authenticationContext.logout();
