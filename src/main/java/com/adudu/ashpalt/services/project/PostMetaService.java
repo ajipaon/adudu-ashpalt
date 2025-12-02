@@ -110,6 +110,7 @@ public class PostMetaService {
                 .map(p -> new PostmetaStatsDto(
                         p.getId(),
                         p.getPostType(),
+                        p.getColumnStatus(),
                         p.getPostParentTitle(),
                         p.getPostTitle(),
                         p.getPostContent(),

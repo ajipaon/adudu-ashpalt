@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState} from 'react';
 import { useParams } from 'react-router';
 import { ProjectService } from 'Frontend/generated/endpoints';
 import Project from 'Frontend/generated/com/adudu/ashpalt/models/project/Project';
@@ -25,11 +25,25 @@ export default function BoardView() {
     const [newColumnName, setNewColumnName] = useState('');
     const [newTaskTitle, setNewTaskTitle] = useState('');
     const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
-    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
     const [openMenuColumnId, setOpenMenuColumnId] = useState<string | null>(null);
     const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null);
     const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
     const [activeTab, setActiveTab] = useState<'summary' | 'timeline' | 'backlog' | 'board' | 'calendar'>('board');
+    const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const updateCurrent = () => {
+            const query = new URLSearchParams(window.location.search);
+            const currentParam = query.get('current');
+            setCurrentTaskId(currentParam);
+        };
+
+        updateCurrent();
+
+        window.addEventListener('popstate', updateCurrent);
+        return () => window.removeEventListener('popstate', updateCurrent);
+    }, []);
+
 
     useEffect(() => {
         if (projectId) loadProject(projectId);
@@ -377,7 +391,12 @@ export default function BoardView() {
                                                                 {...provided.draggableProps}
                                                                 {...provided.dragHandleProps}
                                                                 className="p-3 bg-white rounded-lg shadow mb-3 "
-                                                                onClick={() => setSelectedTaskId(task.id!)}
+                                                                onClick={() => {
+                                                                    const url = new URL(window.location.href);
+                                                                    url.searchParams.set('current', task?.id!!);
+                                                                    window.history.pushState({}, '', url.toString());
+                                                                    setCurrentTaskId(task?.id!);
+                                                                }}
                                                                 style={provided.draggableProps.style}
                                                             >
                                                                 <div className="flex justify-between items-center group border-b text-gray-700 font-bold group">
@@ -483,10 +502,13 @@ export default function BoardView() {
             </Dialog>
 
             <TaskDetailModal
-                taskId={selectedTaskId}
-                isOpen={!!selectedTaskId}
+                taskId={currentTaskId}
+                isOpen={!!currentTaskId}
                 onClose={() => {
-                    setSelectedTaskId(null);
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('current');
+                    window.history.pushState({}, '', url.toString());
+                    setCurrentTaskId(null);
                     project?.id && loadProject(project.id);
                 }}
                 columns={columns}

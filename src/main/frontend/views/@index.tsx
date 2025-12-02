@@ -27,7 +27,6 @@ export default function MainView() {
                 setAgendas((data || []).filter((item): item is PostMeta => !!item));
                 const dataTasks = await PostMetaService.getAssignedTasks();
                 setTasks((dataTasks || []).filter((item): item is PostMeta => !!item));
-                console.log('dataTasks',dataTasks)
             } catch (error) {
                 console.log("Failed to fetch assigned agendas", error);
             } finally {
@@ -185,7 +184,7 @@ export default function MainView() {
                                     <div key={task.id} className="flex items-center gap-3">
                                         <div className="text-sm text-gray-300">
                                             <a href="#" className="text-slate-700 hover:underline">{task.postParentTitle} : {task.postTitle}</a>
-                                            {' '}<span className="bg-slate-700 text-white px-2 py-0.5 rounded text-xs">IN PROGRESS</span>
+                                            {' '}<span className="bg-slate-700 text-white px-2 py-0.5 rounded text-xs">{task.columnStatus}</span>
                                         </div>
                                     </div>
                                 );

@@ -38,6 +38,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     SELECT 
         p.id AS id,
         p.post_type AS postType,
+        p1.post_title as columnStatus,
         p2.title AS postParentTitle,
         p.post_title AS postTitle,
         p.post_content AS postContent,
@@ -47,6 +48,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
         p.post_order AS postOrder,
         p.author_id AS authorId
     FROM post p
+    LEFT JOIN post p1 ON p1.id = p.post_parent
     LEFT JOIN project p2 ON p2.id = p.project_id
     JOIN post_meta pm ON pm.post_id = p.id 
        AND pm.meta_key = 'assignee'
@@ -58,6 +60,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     public interface PostmetaStatsProjection {
         UUID getId();
         String getPostType();
+        String getColumnStatus();
         String getPostParentTitle();
         String getPostTitle();
         String getPostContent();

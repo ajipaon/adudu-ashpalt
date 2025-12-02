@@ -5,6 +5,7 @@ import java.util.UUID;
 public class PostmetaStatsDto {
     private UUID id;
     private String postType;
+    private String columnStatus;
     private String postParentTitle;
     private String postTitle;
     private String postContent;
@@ -14,11 +15,12 @@ public class PostmetaStatsDto {
     private Integer postOrder;
     private UUID authorId;
 
-    public PostmetaStatsDto(UUID id, String postType, String postParentTitle, String postTitle,
+    public PostmetaStatsDto(UUID id, String postType,String columnStatus, String postParentTitle, String postTitle,
                             String postContent, String postContentType, String postStatus,
                             UUID postParent, Integer postOrder, UUID authorId) {
         this.id = id;
         this.postType = postType;
+        this.columnStatus = columnStatus;
         this.postParentTitle = postParentTitle;
         this.postTitle = postTitle;
         this.postContent = postContent;
@@ -90,4 +92,10 @@ public class PostmetaStatsDto {
         this.authorId = authorId;
     }
 
+    public String getColumnStatus() {
+        return columnStatus;
+    }
+    public void setColumnStatus(String columnStatus) {
+        this.columnStatus = columnStatus;
+    }
 }
