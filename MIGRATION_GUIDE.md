@@ -3,6 +3,7 @@
 ## Overview
 
 Database Anda telah direstrukturisasi dari banyak tabel terpisah menjadi arsitektur WordPress-style dengan:
+
 - **1 tabel utama (Post)** untuk semua konten (Project, TaskColumn, Task, ChecklistItem)
 - **1 tabel metadata (PostMeta)** untuk data fleksibel (labels, attachments, assignee, dll)
 - **1 tabel terpisah (CommentTask)** untuk komentar
@@ -10,6 +11,7 @@ Database Anda telah direstrukturisasi dari banyak tabel terpisah menjadi arsitek
 ## Model Baru
 
 ### Post Model
+
 Menggantikan: `Project`, `TaskColumn`, `Task`, `ChecklistItem`
 
 ```java
@@ -51,6 +53,7 @@ postService.createPost(checklistItem);
 ```
 
 ### PostMeta Model
+
 Untuk metadata fleksibel seperti labels, attachments, assignee, dll.
 
 ```java
@@ -81,6 +84,7 @@ Optional<String> coverImage = postService.getCoverImage(taskId);
 ## PostService Methods
 
 ### CRUD Operations
+
 ```java
 // Create
 Post post = postService.createPost(newPost);
@@ -98,6 +102,7 @@ postService.deletePost(postId);
 ```
 
 ### Query by Type
+
 ```java
 // Get all projects
 List<Post> projects = postService.getProjects();
@@ -113,6 +118,7 @@ List<Post> items = postService.getChecklistItemsByTask(taskId);
 ```
 
 ### Metadata Operations
+
 ```java
 // Add metadata
 PostMeta meta = postService.addMeta(postId, "custom_field", "value", "string");
@@ -131,6 +137,7 @@ postService.deleteMeta(postId, "custom_field");
 ```
 
 ### Ordering
+
 ```java
 // Update order
 postService.updatePostOrder(postId, 5);
@@ -143,6 +150,7 @@ postService.reorderPosts(orderedIds);
 ## Database Schema
 
 ### Post Table
+
 ```sql
 CREATE TABLE post (
     id UUID PRIMARY KEY,
@@ -160,6 +168,7 @@ CREATE TABLE post (
 ```
 
 ### PostMeta Table
+
 ```sql
 CREATE TABLE post_meta (
     id UUID PRIMARY KEY,
@@ -171,6 +180,7 @@ CREATE TABLE post_meta (
 ```
 
 ### CommentTask Table
+
 ```sql
 CREATE TABLE comment (
     id UUID PRIMARY KEY,
@@ -186,11 +196,13 @@ CREATE TABLE comment (
 ### Old vs New Structure
 
 **OLD:**
+
 - Tabel terpisah: `project`, `task_column`, `task`, `checklist_item`
 - Data tersebar di banyak tabel
 - Sulit menambah tipe konten baru
 
 **NEW:**
+
 - 1 tabel: `post` (untuk semua konten)
 - Metadata fleksibel di `post_meta`
 - Mudah extend dengan post type baru

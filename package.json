@@ -68,6 +68,8 @@
     "magic-string": "0.30.19",
     "postcss": "^8.5.6",
     "prettier": "3.3.3",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "prettier-plugin-tailwindcss": "^0.7.2",
     "rollup-plugin-brotli": "3.1.0",
     "rollup-plugin-visualizer": "5.14.0",
     "strip-css-comments": "5.0.0",
@@ -141,7 +143,7 @@
       "workbox-core": "7.3.0",
       "workbox-precaching": "7.3.0"
     },
-    "hash": "46cfd2f652e90b77f1c6081fbe79fc314eb0c103031c3f83e23afba296124e7b"
+    "hash": "da0647a58a4b6e324ad16ce1c35fd6868e614b1fe22f803b0287f435e5865055"
   },
   "pnpm": {
     "overrides": {

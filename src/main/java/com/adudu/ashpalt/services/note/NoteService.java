@@ -3,6 +3,7 @@ package com.adudu.ashpalt.services.note;
 
 import com.adudu.ashpalt.models.note.Note;
 import com.adudu.ashpalt.repository.note.NoteRepository;
+import com.adudu.ashpalt.security.AuthenticatedUser;
 import com.vaadin.hilla.BrowserCallable;
 import jakarta.annotation.security.PermitAll;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,35 +20,38 @@ import java.util.UUID;
 public class NoteService {
 
     @Autowired
-    private NoteRepository repository;
+    private NoteRepository noteRepository;
 
+    @Autowired
+    private AuthenticatedUser authenticatedUser;
 
     public Note createNote(CreateNoteRequest request) {
 
         Note note = new Note();
         note.setTitle(request.getTitle());
         note.setContent(request.getContent());
+        note.setAuthor(authenticatedUser.getUserId());
         note.setPublic(request.isPublic());
 
-        return repository.save(note);
+        return noteRepository.save(note);
 
     }
 
     public Optional<Note> getNoteById(UUID id) {
-        return repository.findById(id);
+        return noteRepository.findById(id);
     }
 
     public List<Note> getAllNotes() {
-        return repository.findAll();
+        return noteRepository.findAll();
     }
 
 
-    public List<Note> getNotesByAuthor(String author) {
-        return repository.findByAuthor(author);
+    public List<Note> getNotesByAuthor(UUID author) {
+        return noteRepository.findByAuthor(author);
     }
 
     public Note updateNote(UUID id, CreateNoteRequest request) {
-        Optional<Note> optionalNote = repository.findById(id);
+        Optional<Note> optionalNote = noteRepository.findById(id);
         if (optionalNote.isPresent()) {
             Note note = optionalNote.get();
             note.setTitle(request.getTitle());
@@ -55,35 +59,24 @@ public class NoteService {
             note.setPublic(request.isPublic());
             note.setUpdatedAt(LocalDateTime.now());
 
-            return repository.save(note);
+            return noteRepository.save(note);
         }
         return null;
     }
 
     public void deleteNote(UUID id) {
-        repository.deleteById(id);
+        noteRepository.deleteById(id);
     }
 
     public Note addTeamShare(UUID noteId, UUID userId, UUID teamId) {
-        Optional<Note> optionalNote = repository.findById(noteId);
+        Optional<Note> optionalNote = noteRepository.findById(noteId);
         if (optionalNote.isPresent()) {
             Note note = optionalNote.get();
             note.setUpdatedAt(LocalDateTime.now());
-//            return repository.save(note);
+//            return noteRepository.save(note);
         }
         return null;
     }
-
-//    public Note removeTeamShare(Long noteId, String teamId) {
-//        Optional<Note> optionalNote = repository.findById(noteId);
-//        if (optionalNote.isPresent()) {
-//            Note note = optionalNote.get();
-//            note.getSharedWithTeams().remove(teamId);
-//            note.setUpdatedAt(LocalDateTime.now());
-//            return repository.save(note);
-//        }
-//        return null;
-//    }
 
     public static class CreateNoteRequest {
         private String title;

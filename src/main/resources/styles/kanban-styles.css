@@ -1,87 +1,87 @@
 /* Kanban Board Styles */
 .kanban-card:hover {
-    transform: translateY(-2px);
-    cursor: grab;
+  transform: translateY(-2px);
+  cursor: grab;
 }
 
 .kanban-card:active {
-    cursor: grabbing;
+  cursor: grabbing;
 }
 
 /* Smooth scrolling for board */
 vaadin-horizontal-layout {
-    scroll-behavior: smooth;
+  scroll-behavior: smooth;
 }
 
 /* Card animation */
 @keyframes cardFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .kanban-card {
-    animation: cardFadeIn 0.3s ease-out;
+  animation: cardFadeIn 0.3s ease-out;
 }
 
 /* Column hover effect */
-vaadin-vertical-layout[class*="ColumnComponent"] {
-    transition: box-shadow 0.2s;
+vaadin-vertical-layout[class*='ColumnComponent'] {
+  transition: box-shadow 0.2s;
 }
 
-vaadin-vertical-layout[class*="ColumnComponent"]:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+vaadin-vertical-layout[class*='ColumnComponent']:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* Drag and drop styles */
-[draggable="true"] {
-    cursor: move;
+[draggable='true'] {
+  cursor: move;
 }
 
 [dragging] {
-    opacity: 0.5;
-    transform: rotate(5deg);
+  opacity: 0.5;
+  transform: rotate(5deg);
 }
 
 /* Badge styles */
 .count-badge {
-    font-weight: 600;
-    letter-spacing: 0.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 /* Button hover effects */
-vaadin-button[theme~="tertiary"]:hover {
-    background-color: rgba(0,0,0,0.05);
+vaadin-button[theme~='tertiary']:hover {
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    vaadin-vertical-layout[class*="ColumnComponent"] {
-        min-width: 280px;
-    }
+  vaadin-vertical-layout[class*='ColumnComponent'] {
+    min-width: 280px;
+  }
 }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
+  background: #f1f1f1;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
+  background: #888;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #555;
+  background: #555;
 }

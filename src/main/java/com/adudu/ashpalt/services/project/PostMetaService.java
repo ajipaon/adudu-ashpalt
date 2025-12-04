@@ -28,7 +28,6 @@ public class PostMetaService {
     @Autowired
     private PostMetaRepository postMetaRepository;
 
-
     @Autowired
     private PostRepository postRepository;
 

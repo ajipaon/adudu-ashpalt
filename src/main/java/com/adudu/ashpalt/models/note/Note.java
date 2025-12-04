@@ -18,28 +18,16 @@ public class Note {
     private String content;
 
     @Column(nullable = false)
-    private String author;
+    private UUID author;
 
     @Column(nullable = false)
     private boolean isPublic = false;
 
     @Column(nullable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
-    public Note() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public Note(String title, String content, String author) {
-        this();
-        this.title = title;
-        this.content = content;
-        this.author = author;
-    }
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -50,8 +38,8 @@ public class Note {
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
 
-    public String getAuthor() { return author; }
-    public void setAuthor(String author) { this.author = author; }
+    public UUID getAuthor() { return author; }
+    public void setAuthor(UUID author) { this.author = author; }
 
     public boolean isPublic() { return isPublic; }
     public void setPublic(boolean aPublic) { isPublic = aPublic; }

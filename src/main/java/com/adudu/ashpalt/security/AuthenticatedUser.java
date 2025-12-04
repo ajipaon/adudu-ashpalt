@@ -74,6 +74,20 @@ public class AuthenticatedUser {
         return null;
     }
 
+    public String getEmail() {
+        SecurityContext context = SecurityContextHolder.getContext();
+
+        Authentication authentication = context.getAuthentication();
+
+        if (authentication.getPrincipal() instanceof CustomUserDetails) {
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            return userDetails.getUsername();
+
+        }
+
+        return null;
+    }
+
     public void logout() {
         authenticationContext.logout();
     }

@@ -115,8 +115,11 @@
 .my-view-view:not([readonly]) .layout[empty],
 vaadin-form-layout[empty] {
   border-radius: 1px;
-  background: repeating-conic-gradient(var(--cv-checkerboard-color1) 0% 25%, var(--cv-checkerboard-color2) 0% 50%) 50% /
-    var(--cv-checkerboard-size) var(--cv-checkerboard-size);
+  background: repeating-conic-gradient(
+      var(--cv-checkerboard-color1) 0% 25%,
+      var(--cv-checkerboard-color2) 0% 50%
+    )
+    50% / var(--cv-checkerboard-size) var(--cv-checkerboard-size);
   background-clip: content-box;
   outline: 1px dashed var(--cv-layout-border-color);
   outline-offset: -2px;

@@ -22,9 +22,10 @@ To run the application in development mode:
 ```
 
 This command will:
--   Start the Spring Boot backend.
--   Automatically start the Vite development server for the frontend.
--   Open the application in your default browser (usually at `http://localhost:8080`).
+
+- Start the Spring Boot backend.
+- Automatically start the Vite development server for the frontend.
+- Open the application in your default browser (usually at `http://localhost:8080`).
 
 ## Building for Production
 

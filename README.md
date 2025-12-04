@@ -50,7 +50,6 @@ source directory, contains the server-side Java views</td></tr>
 - Ask questions on [Stack Overflow](https://stackoverflow.com/questions/tagged/vaadin) or join our [Forum](https://vaadin.com/forum).
 - Report issues, create pull requests in [GitHub](https://github.com/vaadin/hilla).
 
-
 ## Deploying using Docker
 
 To build the Dockerized version of the project, run
@@ -65,7 +64,6 @@ Once the Docker image is correctly built, you can test it locally using
 ```
 docker run -p 8080:8080 aduduAshpalt:latest
 ```
-
 
 ## Deploying using Kubernetes
 

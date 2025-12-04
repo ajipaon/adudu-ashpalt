@@ -34,6 +34,7 @@ class CustomUserDetailsService implements UserDetailsService {
         return new CustomUserDetails(
                 user.getId(),
                 user.getUsername(),
+                user.getEmail(),
                 user.getPassword(),
                 user.getRole().getName(),
                 user.isActive(),

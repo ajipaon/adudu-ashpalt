@@ -11,6 +11,7 @@ import java.util.UUID;
 public class CustomUserDetails implements UserDetails {
     private final UUID userId;
     private final String username;
+    private final String email;
     private final String role;
     @JsonIgnore
     private final String password;
@@ -20,12 +21,13 @@ public class CustomUserDetails implements UserDetails {
     private final boolean accountNonLocked;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public CustomUserDetails(UUID userId, String username, String password, String role,
+    public CustomUserDetails(UUID userId, String username,String email, String password, String role,
             boolean enabled, boolean accountNonExpired,
             boolean credentialsNonExpired, boolean accountNonLocked,
             Collection<? extends GrantedAuthority> authorities) {
         this.userId = userId;
         this.username = username;
+        this.email = email;
         this.password = password;
         this.role = role;
         this.enabled = enabled;
@@ -56,6 +58,10 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public String getUsername() {
         return username;
+    }
+
+    public String getEmail(){
+        return email;
     }
 
     @Override

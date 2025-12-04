@@ -3,7 +3,7 @@
 }
 
 @media (min-width: 1024px) {
- .checkout-form-view main {
+  .checkout-form-view main {
     grid-template-columns: auto 324px;
   }
 }

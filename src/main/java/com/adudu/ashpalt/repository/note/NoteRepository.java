@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public interface NoteRepository extends JpaRepository<Note, UUID> , JpaSpecificationExecutor<Note> {
 
-    List<Note> findByAuthor(String author);
+    List<Note> findByAuthor(UUID author);
 
     List<Note> findNoteByIsPublic(boolean isPublic, Pageable pageable);
 }
