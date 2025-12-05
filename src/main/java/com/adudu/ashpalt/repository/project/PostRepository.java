@@ -40,6 +40,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
         p.post_type AS postType,
         p1.post_title as columnStatus,
         p2.title AS postParentTitle,
+        p2.id as postProjectId,
         p.post_title AS postTitle,
         p.post_content AS postContent,
         p.post_content_type AS postContentType,
@@ -62,6 +63,7 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
         String getPostType();
         String getColumnStatus();
         String getPostParentTitle();
+        UUID getPostProjectId();
         String getPostTitle();
         String getPostContent();
         String getPostContentType();

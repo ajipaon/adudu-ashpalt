@@ -34,9 +34,17 @@ export default function BoardView() {
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
 
   useEffect(() => {
-    const updateCurrent = () => {
+    const updateCurrent = async () => {
       const query = new URLSearchParams(window.location.search);
       const currentParam = query.get('current');
+
+      await new Promise<void>((resolve) => {
+        setTimeout(() => {
+          console.log('Pesan ini muncul setelah 10 detik');
+          resolve();
+        }, 1000);
+      });
+
       setCurrentTaskId(currentParam);
     };
 

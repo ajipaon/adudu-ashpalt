@@ -7,6 +7,7 @@ public class PostmetaStatsDto {
     private String postType;
     private String columnStatus;
     private String postParentTitle;
+    private UUID postProjectId;
     private String postTitle;
     private String postContent;
     private String postContentType;
@@ -15,13 +16,14 @@ public class PostmetaStatsDto {
     private Integer postOrder;
     private UUID authorId;
 
-    public PostmetaStatsDto(UUID id, String postType,String columnStatus, String postParentTitle, String postTitle,
+    public PostmetaStatsDto(UUID id, String postType,String columnStatus, String postParentTitle, UUID postProjectId, String postTitle,
                             String postContent, String postContentType, String postStatus,
                             UUID postParent, Integer postOrder, UUID authorId) {
         this.id = id;
         this.postType = postType;
         this.columnStatus = columnStatus;
         this.postParentTitle = postParentTitle;
+        this.postProjectId = postProjectId;
         this.postTitle = postTitle;
         this.postContent = postContent;
         this.postContentType = postContentType;
@@ -45,6 +47,9 @@ public class PostmetaStatsDto {
     }
     public String getPostParentTitle() {
         return postParentTitle;
+    }
+    public UUID getPostProjectId() {
+        return postProjectId;
     }
     public void setPostParentTitle(String pstParentTitle) {
         this.postParentTitle = pstParentTitle;

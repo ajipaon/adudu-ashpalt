@@ -46,15 +46,23 @@ public class PostMetaService {
                 Optional<PostMeta> existingMeta = postMetaRepository.findByPostIdAndMetaKey(meta.getPostId(), meta.getMetaKey());
                 if(existingMeta.isPresent()){
                     updateMeta(meta.getPostId(), meta.getMetaKey(), meta.getMetaValue());
-                    break;
+                }else{
+                    postMetaRepository.save(meta);
                 }
-            case "assignee":
+                break;
+            case"assignee":
                 if(meta.getAncestorId() == null){
                     throw new IllegalArgumentException("data cannot processing");
                 }
-            default:
-                postMetaRepository.save(meta);
+                Optional<PostMeta> existingMetaAssigne = postMetaRepository.findByPostIdAndMetaKey(meta.getPostId(), meta.getMetaKey());
+                if(existingMetaAssigne.isPresent()){
+                    updateMeta(meta.getPostId(), meta.getMetaKey(), meta.getMetaValue());
+                }else{
+                    postMetaRepository.save(meta);
+                }
+                break;
         }
+
 
     }
 
@@ -111,6 +119,7 @@ public class PostMetaService {
                         p.getPostType(),
                         p.getColumnStatus(),
                         p.getPostParentTitle(),
+                        p.getPostProjectId(),
                         p.getPostTitle(),
                         p.getPostContent(),
                         p.getPostContentType(),

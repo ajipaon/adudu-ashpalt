@@ -70,24 +70,3 @@ export function Breadcrumb({ items }: { items: Crumb[] }) {
     </nav>
   );
 }
-
-// // Example usage
-// export default function BreadcrumbDemo(): JSX.Element {
-//     const items: Crumb[] = [
-//         { label: 'Dashboard', href: '/' },
-//         { label: 'Projects', href: '/projects' },
-//         { label: 'Project Alpha', href: '/projects/alpha' },
-//         { label: 'Editor' },
-//     ];
-//
-//     return (
-//         <div className="p-4">
-//             <Breadcrumb items={items} />
-//
-//             <div className="mt-6">
-//                 <h2 className="text-xl font-semibold">Halaman Editor</h2>
-//                 <p className="text-sm text-gray-500 mt-2">Contoh konten halaman untuk menunjukkan breadcrumb.</p>
-//             </div>
-//         </div>
-//     );
-// }
