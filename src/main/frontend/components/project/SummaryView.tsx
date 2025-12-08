@@ -1,28 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { ProjectService } from 'Frontend/generated/endpoints';
+import ProjectSummaryDto from 'Frontend/generated/com/adudu/ashpalt/models/project/dto/ProjectSummaryDto';
 
 interface SummaryViewProps {
   projectId: string;
 }
 
 export default function SummaryView({ projectId }: SummaryViewProps) {
-  const [stats, setStats] = useState({
-    completed: 13,
-    updated: 37,
-    created: 25,
-    dueSoon: 0,
-  });
+  const [summary, setSummary] = useState<ProjectSummaryDto | null>(null);
+
+  useEffect(() => {
+    if (projectId) {
+      ProjectService.getProjectSummary(projectId)
+        .then((data) => setSummary(data || null))
+        .catch(console.error);
+    }
+  }, [projectId]);
+
+  if (!summary) {
+    return <div className="p-6">Loading...</div>;
+  }
 
   return (
-    <div className="p-6  min-h-screen">
-      {/*<div className="mb-6">*/}
-      {/*    <button className="px-4 py-2 bg-white text-black rounded hover:bg-slate-700 flex items-center gap-2">*/}
-      {/*        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">*/}
-      {/*            <path d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" />*/}
-      {/*        </svg>*/}
-      {/*        Filter*/}
-      {/*    </button>*/}
-      {/*</div>*/}
-
+    <div className="p-6 min-h-screen">
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-lg p-4 border border-slate-700">
           <div className="flex items-center gap-3">
@@ -36,7 +36,7 @@ export default function SummaryView({ projectId }: SummaryViewProps) {
               </svg>
             </div>
             <div>
-              <div className="text-2xl font-bold ">{stats.completed} completed</div>
+              <div className="text-2xl font-bold ">{summary.completed} completed</div>
               <div className="text-sm text-gray-700">in the last 7 days</div>
             </div>
           </div>
@@ -50,7 +50,7 @@ export default function SummaryView({ projectId }: SummaryViewProps) {
               </svg>
             </div>
             <div>
-              <div className="text-2xl font-bold text-black">{stats.updated} updated</div>
+              <div className="text-2xl font-bold text-black">{summary.updated} updated</div>
               <div className="text-sm text-gray-700">in the last 7 days</div>
             </div>
           </div>
@@ -68,7 +68,7 @@ export default function SummaryView({ projectId }: SummaryViewProps) {
               </svg>
             </div>
             <div>
-              <div className="text-2xl font-bold text-black">{stats.created} created</div>
+              <div className="text-2xl font-bold text-black">{summary.created} created</div>
               <div className="text-sm text-gray-700">in the last 7 days</div>
             </div>
           </div>
@@ -86,7 +86,7 @@ export default function SummaryView({ projectId }: SummaryViewProps) {
               </svg>
             </div>
             <div>
-              <div className="text-2xl font-bold text-black">{stats.dueSoon} due soon</div>
+              <div className="text-2xl font-bold text-black">{summary.dueSoon} due soon</div>
               <div className="text-sm text-gray-700">in the next 7 days</div>
             </div>
           </div>
@@ -100,132 +100,16 @@ export default function SummaryView({ projectId }: SummaryViewProps) {
           <h3 className="text-lg font-semibold text-black mb-2">Status overview</h3>
           <p className="text-sm text-gray-700 mb-4">
             Get a snapshot of the status of your work items.{' '}
-            <a href="#" className="text-blue-400 hover:underline">
-              View all work items
-            </a>
           </p>
           <div className="flex items-center justify-center py-8">
-            <div className="relative w-64 h-64">
-              <svg viewBox="0 0 200 200" className="transform -rotate-90">
-                {/* Donut chart segments */}
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="80"
-                  fill="none"
-                  stroke="#3b82f6"
-                  strokeWidth="40"
-                  strokeDasharray="150 500"
-                />
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="80"
-                  fill="none"
-                  stroke="#8b5cf6"
-                  strokeWidth="40"
-                  strokeDasharray="100 500"
-                  strokeDashoffset="-150"
-                />
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="80"
-                  fill="none"
-                  stroke="#f59e0b"
-                  strokeWidth="40"
-                  strokeDasharray="80 500"
-                  strokeDashoffset="-250"
-                />
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="80"
-                  fill="none"
-                  stroke="#10b981"
-                  strokeWidth="40"
-                  strokeDasharray="70 500"
-                  strokeDashoffset="-330"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-4xl font-bold text-black">265</div>
-                <div className="text-sm text-gray-700">Total work item...</div>
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 mt-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <span className="text-sm text-gray-500">WAITING SCHOOL...</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-gray-500"></div>
-              <span className="text-sm text-gray-500">DONE: 11 - 80</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-pink-500"></div>
-              <span className="text-sm text-gray-500">To Do: 38</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-              <span className="text-sm text-gray-500">UNRESOLVED: 8</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-              <span className="text-sm text-gray-500">Done: 43</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span className="text-sm text-gray-500">In Progress: 80</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white rounded-lg p-6 border border-slate-700">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-black">Recent activity</h3>
-            <button className="text-gray-700 hover:text-black">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-              </svg>
-            </button>
-          </div>
-          <p className="text-sm text-gray-700 mb-4">
-            Stay up to date with what's happening across the space.
-          </p>
-
-          <div className="space-y-4">
-            <div className="border-l-2 border-blue-500 pl-4">
-              <div className="text-sm font-medium text-gray-700 mb-2">Yesterday</div>
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-black font-semibold text-sm">
-                  J
+            {/* Simple visualization for status overview */}
+            <div className="grid grid-cols-2 gap-4 w-full">
+              {Object.entries(summary.statusOverview || {}).map(([status, count]) => (
+                <div key={status} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <span className="font-medium">{status}</span>
+                  <span className="font-bold">{count}</span>
                 </div>
-                <div className="flex-1">
-                  <div className="text-sm text-gray-500">
-                    <span className="text-blue-400">Jatin_NTB</span> commented on{' '}
-                    <a href="#" className="text-blue-400 hover:underline">
-                      HD-2363: [Tiwari] [Setting Kode CID BNI 46]
-                    </a>{' '}
-                    <span className="bg-blue-600 text-black px-2 py-0.5 rounded text-xs">
-                      IN PROGRESS
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">about 12 hours ago</div>
-                  <div className="mt-2 bg-slate-100 rounded p-3 text-sm text-gray-700">
-                    <div className="font-semibold mb-1">Revisi Email :</div>
-                    <div>Nomor HP : +62 812-5856-1226</div>
-                    <div>
-                      Email :{' '}
-                      <a href="mailto:id.c.id" className="text-blue-400">
-                        id.c.id
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -235,208 +119,37 @@ export default function SummaryView({ projectId }: SummaryViewProps) {
           <h3 className="text-lg font-semibold text-black mb-2">Priority breakdown</h3>
           <p className="text-sm text-gray-700 mb-4">
             Get a holistic view of how your work is being prioritized.{' '}
-            <a href="#" className="text-blue-400 hover:underline">
-              How to manage priorities for spaces
-            </a>
           </p>
           <div className="h-64 flex items-end justify-around gap-4 mb-4">
-            <div className="flex flex-col items-center flex-1">
-              <div className="w-full bg-red-500 rounded-t" style={{ height: '20%' }}></div>
-              <div className="text-xs text-gray-700 mt-2">Highest</div>
-            </div>
-            <div className="flex flex-col items-center flex-1">
-              <div className="w-full bg-orange-500 rounded-t" style={{ height: '30%' }}></div>
-              <div className="text-xs text-gray-700 mt-2">High</div>
-            </div>
-            <div className="flex flex-col items-center flex-1">
-              <div className="w-full bg-yellow-500 rounded-t" style={{ height: '50%' }}></div>
-              <div className="text-xs text-gray-700 mt-2">Medium</div>
-            </div>
-            <div className="flex flex-col items-center flex-1">
-              <div className="w-full bg-blue-500 rounded-t" style={{ height: '15%' }}></div>
-              <div className="text-xs text-gray-700 mt-2">Low</div>
-            </div>
-            <div className="flex flex-col items-center flex-1">
-              <div className="w-full bg-gray-500 rounded-t" style={{ height: '10%' }}></div>
-              <div className="text-xs text-gray-700 mt-2">Lowest</div>
-            </div>
-          </div>
-        </div>
+            {['Highest', 'High', 'Medium', 'Low', 'Lowest'].map((priority) => {
+              const count = summary.priorityBreakdown?.[priority] || 0;
+              const values = Object.values(summary.priorityBreakdown || { a: 0 }).filter(
+                (v): v is number => typeof v === 'number'
+              );
+              const max = Math.max(...values, 1);
+              const height = `${(count / max) * 100}%`;
+              const color =
+                priority === 'Highest'
+                  ? 'bg-red-500'
+                  : priority === 'High'
+                    ? 'bg-orange-500'
+                    : priority === 'Medium'
+                      ? 'bg-yellow-500'
+                      : priority === 'Low'
+                        ? 'bg-blue-500'
+                        : 'bg-gray-500';
 
-        {/* Related Work */}
-        <div className="bg-white rounded-lg p-6 border border-slate-700">
-          <h3 className="text-lg font-semibold text-black mb-2">
-            Related work from other projects
-          </h3>
-          <p className="text-sm text-gray-700 mb-4">
-            Connect work items across projects to improve tracking and visibility.
-          </p>
-          <div className="flex items-center justify-center h-48 text-gray-500">
-            Related work items from other projects will appear here.
-          </div>
-        </div>
-
-        {/* Team Workload */}
-        <div className="bg-white rounded-lg p-6 border border-slate-700">
-          <h3 className="text-lg font-semibold text-black mb-2">Team workload</h3>
-          <p className="text-sm text-gray-700 mb-4">
-            Monitor the capacity of your team.{' '}
-            <a href="#" className="text-blue-400 hover:underline">
-              Reassign work items to get the right balance
-            </a>
-          </p>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-black text-xs font-semibold">
-                S
-              </div>
-              <div className="flex-1">
-                <div className="text-sm text-gray-500 mb-1">salesteknodigit...</div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-slate-700 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '32%' }}></div>
-                  </div>
-                  <span className="text-xs text-gray-700">32%</span>
+              return (
+                <div key={priority} className="flex flex-col items-center flex-1 h-full justify-end">
+                  <div
+                    className={`w-full ${color} rounded-t transition-all duration-500`}
+                    style={{ height: height || '1px' }}
+                  ></div>
+                  <div className="text-xs text-gray-700 mt-2">{priority}</div>
+                  <div className="text-xs font-bold">{count}</div>
                 </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-black text-xs font-semibold">
-                P
-              </div>
-              <div className="flex-1">
-                <div className="text-sm text-gray-500 mb-1">prodiki.qa</div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-slate-700 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '15%' }}></div>
-                  </div>
-                  <span className="text-xs text-gray-700">15%</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-black text-xs font-semibold">
-                R
-              </div>
-              <div className="flex-1">
-                <div className="text-sm text-gray-500 mb-1">f0kic80</div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-slate-700 rounded-full h-2">
-                    <div className="bg-orange-500 h-2 rounded-full" style={{ width: '15%' }}></div>
-                  </div>
-                  <span className="text-xs text-gray-700">15%</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-black text-xs font-semibold">
-                B
-              </div>
-              <div className="flex-1">
-                <div className="text-sm text-gray-500 mb-1">backend-NU</div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-slate-700 rounded-full h-2">
-                    <div className="bg-purple-500 h-2 rounded-full" style={{ width: '13%' }}></div>
-                  </div>
-                  <span className="text-xs text-gray-700">13%</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center text-black text-xs font-semibold">
-                J
-              </div>
-              <div className="flex-1">
-                <div className="text-sm text-gray-500 mb-1">Jatin_NTB</div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-slate-700 rounded-full h-2">
-                    <div className="bg-pink-500 h-2 rounded-full" style={{ width: '0%' }}></div>
-                  </div>
-                  <span className="text-xs text-gray-700">0%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg p-6 border border-slate-700">
-          <h3 className="text-lg font-semibold text-black mb-2">Epic progress</h3>
-          <p className="text-sm text-gray-700 mb-4">
-            See how your epics are progressing at a glance.{' '}
-            <a href="#" className="text-blue-400 hover:underline">
-              View all epics
-            </a>
-          </p>
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <svg className="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                  <path
-                    fillRule="evenodd"
-                    d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="text-sm font-medium text-gray-500">HD-1 BUG DAN ERROR</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-slate-700 rounded-full h-3 overflow-hidden">
-                  <div className="flex h-full">
-                    <div className="bg-green-500" style={{ width: '52%' }}></div>
-                    <div className="bg-blue-500" style={{ width: '14%' }}></div>
-                  </div>
-                </div>
-                <span className="text-xs text-gray-700 w-12">52%</span>
-                <span className="text-xs text-blue-400 w-12">14%</span>
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <svg className="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                  <path
-                    fillRule="evenodd"
-                    d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="text-sm font-medium text-gray-500">HD-2 SETTING KODE BILLER</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-slate-700 rounded-full h-3 overflow-hidden">
-                  <div className="flex h-full">
-                    <div className="bg-green-500" style={{ width: '73%' }}></div>
-                    <div className="bg-blue-500" style={{ width: '26%' }}></div>
-                  </div>
-                </div>
-                <span className="text-xs text-gray-700 w-12">73%</span>
-                <span className="text-xs text-blue-400 w-12">26%</span>
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <svg className="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                  <path
-                    fillRule="evenodd"
-                    d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="text-sm font-medium text-gray-500">HD-6 PERUBAHAN DATA</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-slate-700 rounded-full h-3 overflow-hidden">
-                  <div className="flex h-full">
-                    <div className="bg-green-500" style={{ width: '63%' }}></div>
-                    <div className="bg-blue-500" style={{ width: '8%' }}></div>
-                  </div>
-                </div>
-                <span className="text-xs text-gray-700 w-12">63%</span>
-                <span className="text-xs text-blue-400 w-12">8%</span>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
 
@@ -445,87 +158,32 @@ export default function SummaryView({ projectId }: SummaryViewProps) {
           <h3 className="text-lg font-semibold text-black mb-2">Types of work</h3>
           <p className="text-sm text-gray-700 mb-4">
             Get a breakdown of work items by their types.{' '}
-            <a href="#" className="text-blue-400 hover:underline">
-              View all items
-            </a>
           </p>
           <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 w-32">
-                <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="text-sm text-gray-500">Task</span>
-              </div>
-              <div className="flex-1 bg-slate-700 rounded-full h-3">
-                <div className="bg-blue-500 h-3 rounded-full" style={{ width: '89%' }}></div>
-              </div>
-              <span className="text-xs text-gray-700 w-12">89%</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 w-32">
-                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                </svg>
-                <span className="text-sm text-gray-500">Story</span>
-              </div>
-              <div className="flex-1 bg-slate-700 rounded-full h-3">
-                <div className="bg-green-500 h-3 rounded-full" style={{ width: '0%' }}></div>
-              </div>
-              <span className="text-xs text-gray-700 w-12">0%</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 w-32">
-                <svg className="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="text-sm text-gray-500">Epic</span>
-              </div>
-              <div className="flex-1 bg-slate-700 rounded-full h-3">
-                <div className="bg-purple-500 h-3 rounded-full" style={{ width: '0%' }}></div>
-              </div>
-              <span className="text-xs text-gray-700 w-12">0%</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 w-32">
-                <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="text-sm text-gray-500">Bug</span>
-              </div>
-              <div className="flex-1 bg-slate-700 rounded-full h-3">
-                <div className="bg-red-500 h-3 rounded-full" style={{ width: '0%' }}></div>
-              </div>
-              <span className="text-xs text-gray-700 w-12">0%</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 w-32">
-                <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="text-sm text-gray-500">Subtask</span>
-              </div>
-              <div className="flex-1 bg-slate-700 rounded-full h-3">
-                <div className="bg-yellow-500 h-3 rounded-full" style={{ width: '0%' }}></div>
-              </div>
-              <span className="text-xs text-gray-700 w-12">0%</span>
-            </div>
+            {Object.entries(summary.typeBreakdown || {}).map(([type, count]) => {
+              const values = Object.values(summary.typeBreakdown || {}).filter(
+                (v): v is number => typeof v === 'number'
+              );
+              const total = values.reduce((a, b) => a + b, 0);
+              const safeCount = count || 0;
+              const percentage = total > 0 ? Math.round((safeCount / total) * 100) : 0;
+              return (
+                <div key={type} className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 w-32 capitalize">
+                    <span className="text-sm text-gray-500">{type}</span>
+                  </div>
+                  <div className="flex-1 bg-slate-700 rounded-full h-3">
+                    <div
+                      className="bg-blue-500 h-3 rounded-full"
+                      style={{ width: `${percentage}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-xs text-gray-700 w-12">
+                    {safeCount} ({percentage}%)
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
