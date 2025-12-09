@@ -57,6 +57,25 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
             """, nativeQuery = true)
     List<PostmetaStatsProjection> findAssignedTasks(@Param("userId") String userId);
 
+    @Query(value = """
+        SELECT p.*
+        FROM post p
+        JOIN post_meta pm 
+          ON pm.post_id = p.id
+        WHERE pm.meta_key = 'assignee'
+          AND pm.meta_value = :userId
+          AND p.post_parent = :projectId
+          AND p.post_type = :postType
+        """,
+            nativeQuery = true)
+    List<Post> findPostByAssignedTasks(
+            @Param("postType") String postType,
+            @Param("userId") String userId,
+            @Param("projectId") UUID projectId
+
+    );
+
+
     public interface PostmetaStatsProjection {
         UUID getId();
 

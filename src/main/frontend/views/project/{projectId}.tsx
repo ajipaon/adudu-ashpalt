@@ -1,8 +1,10 @@
 import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
 import { Button, Dialog, TextField } from '@vaadin/react-components';
+import AvatarGroup from 'Frontend/components/AvatarGroup';
 import Post from 'Frontend/generated/com/adudu/ashpalt/models/project/Post';
 import Project from 'Frontend/generated/com/adudu/ashpalt/models/project/Project';
 import { ProjectService } from 'Frontend/generated/endpoints';
+import { useProjectMembersStore } from 'Frontend/store/projectMembersStore';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import CalendarView from '../../components/project/CalendarView';
@@ -32,6 +34,7 @@ export default function BoardView() {
     'summary' | 'timeline' | 'backlog' | 'board' | 'calendar'
   >('board');
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
+  const { projectMembersStore } = useProjectMembersStore();
 
   useEffect(() => {
     const updateCurrent = async () => {
@@ -40,7 +43,7 @@ export default function BoardView() {
 
       await new Promise<void>((resolve) => {
         setTimeout(() => {
-          console.log('Pesan ini muncul setelah 10 detik');
+          console.log('Pesan ini muncul setelah 1 detik');
           resolve();
         }, 1000);
       });
@@ -56,7 +59,7 @@ export default function BoardView() {
 
   useEffect(() => {
     if (projectId) loadProject(projectId);
-  }, [projectId]);
+  }, [projectId, projectMembersStore]);
 
   useEffect(() => {
     const el = document.getElementById('board-scroll');
@@ -140,7 +143,7 @@ export default function BoardView() {
     for (const col of cols) {
       if (!col || !col.id) continue;
 
-      const tasks = await ProjectService.getTasksByColumnId(col.id);
+      const tasks = await ProjectService.getTasksByColumnId(col.id, projectMembersStore?.userId);
       const sortedTasks = (tasks || [])
         .filter((t): t is Post => !!t)
         .sort((a, b) => (a.postOrder || 0) - (b.postOrder || 0));
@@ -170,7 +173,7 @@ export default function BoardView() {
 
     setNewColumnName('');
     setIsColumnDialogOpen(false);
-    loadProject(project.id!);
+    await loadProject(project.id!);
   }
 
   async function handleAddTask() {
@@ -189,7 +192,7 @@ export default function BoardView() {
 
     setNewTaskTitle('');
     setIsTaskDialogOpen(false);
-    loadProject(project!.id!);
+    await loadProject(project!.id!);
   }
 
   async function onDragEnd(result: DropResult) {
@@ -222,19 +225,19 @@ export default function BoardView() {
   async function handleDeleteColumn(colId: string) {
     await ProjectService.deleteColumn(colId);
     setOpenMenuColumnId(null);
-    loadProject(project!.id!);
+    await loadProject(project!.id!);
   }
   async function handleMoveColumn(colId: string, index: string) {
     let int1 = parseInt(index);
     await ProjectService.moveOrderColumn(colId, int1);
     setOpenMenuColumnId(null);
-    loadProject(project!.id!);
+    await loadProject(project!.id!);
   }
 
   async function handleDeleteTask(taskId: string) {
     await ProjectService.deleteTask(taskId);
     setOpenMenuTaskId(null);
-    loadProject(project!.id!);
+    await loadProject(project!.id!);
   }
 
   if (!project) return <div>Loading...</div>;
@@ -297,6 +300,7 @@ export default function BoardView() {
           >
             Calendar
           </button>
+          {activeTab == 'board' && <AvatarGroup projectId={projectId!} />}
         </div>
       </div>
 

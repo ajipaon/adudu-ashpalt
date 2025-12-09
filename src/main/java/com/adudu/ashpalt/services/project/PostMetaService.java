@@ -61,6 +61,9 @@ public class PostMetaService {
                     postMetaRepository.save(meta);
                 }
                 break;
+
+            default:
+                postMetaRepository.save(meta);
         }
 
 

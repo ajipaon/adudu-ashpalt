@@ -20,31 +20,31 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
   const [viewMode, setViewMode] = useState<'week' | 'month'>('month');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDescription, setNewTaskDescription] = useState('');
-  const [newTaskPriority, setNewTaskPriority] = useState('medium');
-  const [newTaskColor, setNewTaskColor] = useState('bg-blue-500');
-  const [newTaskStartTime, setNewTaskStartTime] = useState('09:00');
-  const [newTaskEndTime, setNewTaskEndTime] = useState('17:00');
+  const [newEventTitle, setNewEventTitle] = useState('');
+  const [newEventDescription, setNewEventDescription] = useState('');
+  const [newEventPriority, setNewEventPriority] = useState('medium');
+  const [newEventColor, setNewEventColor] = useState('bg-blue-500');
+  const [newEventStartTime, setNewEventStartTime] = useState('09:00');
+  const [newEventEndTime, setNewEventEndTime] = useState('17:00');
   const [isFullDay, setIsFullDay] = useState(false);
-  const [showTaskDetails, setShowTaskDetails] = useState(false);
-  const [tasksForSelectedDate, setTasksForSelectedDate] = useState<PostMeta[]>([]);
+  const [showEventDetails, setShowEventDetails] = useState(false);
+  const [eventsForSelectedDate, setEventsForSelectedDate] = useState<PostMeta[]>([]);
   const [recurrenceType, setRecurrenceType] = useState<'single' | 'range' | 'daily'>('single');
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [projectMembers, setProjectMembers] = useState<any[]>([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
 
-  const [tasks, setTasks] = useState<PostMeta[]>([]);
+  const [events, setEvents] = useState<PostMeta[]>([]);
 
   const loadCalendar = useCallback(() => {
     PostMetaService.getMeta(projectId!!, mKey)
       .then((value) => {
         const filtered = (value ?? []).filter((v): v is PostMeta => !!v);
-        setTasks(filtered || []);
+        setEvents(filtered || []);
       })
       .catch((error) => {
         console.error('Failed to load assignees:', error);
-        setTasks([]);
+        setEvents([]);
       });
   }, [projectId]);
 
@@ -89,31 +89,31 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
     return days;
   };
 
-  const getTasksForDate = (date: Date | null) => {
+  const getEventsForDate = (date: Date | null) => {
     if (!date) return [];
-    return tasks.filter((task) => {
-      const content: MetaValueCalenderProps = JSON.parse(task.metaValue!!);
-      const taskDate = new Date(content.date);
+    return events.filter((event) => {
+      const content: MetaValueCalenderProps = JSON.parse(event.metaValue!!);
+      const eventDate = new Date(content.date);
       const recurrence = content.recurrenceType || 'single';
 
       if (recurrence === 'daily') {
         return true;
       }
       if (recurrence === 'range' && content.endDate) {
-        const taskEndDate = new Date(content.endDate);
+        const eventEndDate = new Date(content.endDate);
         const checkDate = new Date(date);
         checkDate.setHours(0, 0, 0, 0);
-        const startDate = new Date(taskDate);
+        const startDate = new Date(eventDate);
         startDate.setHours(0, 0, 0, 0);
-        const endDateNormalized = new Date(taskEndDate);
+        const endDateNormalized = new Date(eventEndDate);
         endDateNormalized.setHours(0, 0, 0, 0);
 
         return checkDate >= startDate && checkDate <= endDateNormalized;
       }
       return (
-        taskDate.getDate() === date.getDate() &&
-        taskDate.getMonth() === date.getMonth() &&
-        taskDate.getFullYear() === date.getFullYear()
+        eventDate.getDate() === date.getDate() &&
+        eventDate.getMonth() === date.getMonth() &&
+        eventDate.getFullYear() === date.getFullYear()
       );
     });
   };
@@ -137,29 +137,29 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
     if (!date) return;
     setSelectedDate(date);
 
-    const dateTasks = getTasksForDate(date);
-    if (dateTasks.length > 0) {
-      setTasksForSelectedDate(dateTasks);
-      setShowTaskDetails(true);
+    const dateEvents = getEventsForDate(date);
+    if (dateEvents.length > 0) {
+      setEventsForSelectedDate(dateEvents);
+      setShowEventDetails(true);
     } else {
       setIsDialogOpen(true);
     }
   };
 
-  const handleCreateTask = async () => {
-    if (!newTaskTitle || !selectedDate) return;
+  const handleCreateEvent = async () => {
+    if (!newEventTitle || !selectedDate) return;
     if (recurrenceType === 'range' && (!endDate || endDate < selectedDate)) {
       alert('End date must be after or equal to start date');
       return;
     }
 
-    const newTask: MetaValueCalenderProps = {
-      title: newTaskTitle,
+    const newEvent: MetaValueCalenderProps = {
+      title: newEventTitle,
       date: selectedDate,
-      color: newTaskColor,
-      description: newTaskDescription,
-      startTime: isFullDay ? '' : newTaskStartTime,
-      endTime: isFullDay ? '' : newTaskEndTime,
+      color: newEventColor,
+      description: newEventDescription,
+      startTime: isFullDay ? '' : newEventStartTime,
+      endTime: isFullDay ? '' : newEventEndTime,
       recurrenceType: recurrenceType,
       endDate: recurrenceType === 'range' ? endDate || undefined : undefined,
       memberIds: selectedMemberIds.length > 0 ? selectedMemberIds : undefined,
@@ -168,43 +168,43 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
       postId: projectId,
       metaKey: mKey,
       metaType,
-      metaValue: JSON.stringify(newTask),
+      metaValue: JSON.stringify(newEvent),
     };
     await PostMetaService.saveMeta(newMeta);
 
-    setTasks([...tasks, newMeta]);
+    setEvents([...events, newMeta]);
 
-    setNewTaskTitle('');
-    setNewTaskDescription('');
-    setNewTaskPriority('medium');
-    setNewTaskColor('bg-blue-500');
-    setNewTaskStartTime('09:00');
-    setNewTaskEndTime('10:00');
+    setNewEventTitle('');
+    setNewEventDescription('');
+    setNewEventPriority('medium');
+    setNewEventColor('bg-blue-500');
+    setNewEventStartTime('09:00');
+    setNewEventEndTime('10:00');
     setIsFullDay(false);
     setRecurrenceType('single');
     setEndDate(null);
     setSelectedMemberIds([]);
     setIsDialogOpen(false);
-    setShowTaskDetails(false);
+    setShowEventDetails(false);
   };
 
-  const handleCreateNewTask = () => {
-    setShowTaskDetails(false);
+  const handleCreateNewEvent = () => {
+    setShowEventDetails(false);
     setIsDialogOpen(true);
   };
 
-  const handleDeleteTask = async (taskId: string | undefined) => {
-    if (!taskId) return;
-    const isDelete = window.confirm('Are you sure you want to delete this task?');
+  const handleDeleteEvent = async (eventId: string | undefined) => {
+    if (!eventId) return;
+    const isDelete = window.confirm('Are you sure you want to delete this event?');
     if (!isDelete) return;
 
     try {
-      await PostMetaService.deleteMeta(taskId as any);
-      setTasks(tasks.filter((t) => t.id !== taskId));
-      setTasksForSelectedDate(tasksForSelectedDate.filter((t) => t.id !== taskId));
+      await PostMetaService.deleteMeta(eventId as any);
+      setEvents(events.filter((t) => t.id !== eventId));
+      setEventsForSelectedDate(eventsForSelectedDate.filter((t) => t.id !== eventId));
     } catch (error) {
-      console.error('Failed to delete task:', error);
-      alert('Failed to delete task');
+      console.error('Failed to delete event:', error);
+      alert('Failed to delete event');
     }
   };
 
@@ -278,7 +278,7 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
             ))}
 
             {days.map((date, index) => {
-              const dayTasks = getTasksForDate(date);
+              const dayEvents = getEventsForDate(date);
               const isOtherMonth = !isCurrentMonth(date);
 
               return (
@@ -295,18 +295,18 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                     }`}
                   >
                     {date?.getDate()}
-                    {dayTasks.length > 0 && (
+                    {dayEvents.length > 0 && (
                       <span className="ml-2 text-xs text-gray-500">
-                        {dayTasks.length} card{dayTasks.length > 1 ? 's' : ''}
+                        {dayEvents.length} card{dayEvents.length > 1 ? 's' : ''}
                       </span>
                     )}
                   </div>
                   <div className="space-y-1">
-                    {dayTasks.map((task) => {
-                      const content: MetaValueCalenderProps = JSON.parse(task.metaValue!!);
+                    {dayEvents.map((event) => {
+                      const content: MetaValueCalenderProps = JSON.parse(event.metaValue!!);
                       return (
                         <div
-                          key={task.id}
+                          key={event.id}
                           className="bg-white rounded shadow-sm p-2 border-l-4 hover:shadow-md transition-shadow"
                           style={{ borderLeftColor: content.color.replace('bg-', '#') }}
                           onClick={() => handleDateClick(date)}
@@ -328,13 +328,13 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
         </div>
       </div>
 
-      {showTaskDetails && (
+      {showEventDetails && (
         <div className="w-96 bg-gray-50 border-l border-gray-200 overflow-y-auto">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-800">{formatDate(selectedDate)}</h3>
               <button
-                onClick={() => setShowTaskDetails(false)}
+                onClick={() => setShowEventDetails(false)}
                 className="p-2 hover:bg-gray-200 rounded transition-colors"
               >
                 <X size={20} className="text-gray-600" />
@@ -343,16 +343,16 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
 
             <div className="mb-4">
               <p className="text-sm text-gray-600 mb-3">
-                {tasksForSelectedDate.length} task{tasksForSelectedDate.length > 1 ? 's' : ''} on
+                {eventsForSelectedDate.length} event{eventsForSelectedDate.length > 1 ? 's' : ''} on
                 this date
               </p>
 
               <div className="space-y-3">
-                {tasksForSelectedDate.map((task) => {
-                  const content: MetaValueCalenderProps = JSON.parse(task.metaValue!!);
+                {eventsForSelectedDate.map((event) => {
+                  const content: MetaValueCalenderProps = JSON.parse(event.metaValue!!);
                   return (
                     <div
-                      key={task.id}
+                      key={event.id}
                       className="bg-white rounded-lg shadow-sm p-4 border-l-4 hover:shadow-md transition-shadow"
                       style={{ borderLeftColor: content.color.replace('bg-', '#') }}
                     >
@@ -397,10 +397,10 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteTask(task.id);
+                            handleDeleteEvent(event.id);
                           }}
                           className="p-1 hover:bg-red-100 rounded transition-colors flex-shrink-0"
-                          title="Delete task"
+                          title="Delete event"
                         >
                           <X size={16} className="text-red-600" />
                         </button>
@@ -412,17 +412,17 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
             </div>
 
             <button
-              onClick={handleCreateNewTask}
+              onClick={handleCreateNewEvent}
               className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 font-medium"
             >
               <Plus size={20} />
-              Create New Task
+              Create New Event
             </button>
           </div>
         </div>
       )}
       <Dialog
-        headerTitle={`Create Task - ${formatDate(selectedDate)}`}
+        headerTitle={`Create Event - ${formatDate(selectedDate)}`}
         opened={isDialogOpen}
         onOpenedChanged={(e) => setIsDialogOpen(e.detail.value)}
       >
@@ -430,12 +430,14 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Task Title *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Event Title *
+                </label>
                 <input
                   type="text"
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  placeholder="Enter task title..."
+                  value={newEventTitle}
+                  onChange={(e) => setNewEventTitle(e.target.value)}
+                  placeholder="Enter event title..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -443,9 +445,9 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea
-                  value={newTaskDescription}
-                  onChange={(e) => setNewTaskDescription(e.target.value)}
-                  placeholder="Enter task description..."
+                  value={newEventDescription}
+                  onChange={(e) => setNewEventDescription(e.target.value)}
+                  placeholder="Enter event description..."
                   rows={8}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
@@ -454,8 +456,8 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
                 <select
-                  value={newTaskPriority}
-                  onChange={(e) => setNewTaskPriority(e.target.value)}
+                  value={newEventPriority}
+                  onChange={(e) => setNewEventPriority(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="low">Low</option>
@@ -479,9 +481,9 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                   ].map((color) => (
                     <button
                       key={color}
-                      onClick={() => setNewTaskColor(color)}
+                      onClick={() => setNewEventColor(color)}
                       className={`w-8 h-8 rounded-full ${color} ${
-                        newTaskColor === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''
+                        newEventColor === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''
                       }`}
                     />
                   ))}
@@ -572,15 +574,15 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
                     <div className="grid grid-cols-2 gap-4">
                       <TimePicker
                         label="Start Time"
-                        value={newTaskStartTime}
-                        onValueChanged={(e) => setNewTaskStartTime(e.detail.value)}
+                        value={newEventStartTime}
+                        onValueChanged={(e) => setNewEventStartTime(e.detail.value)}
                         step={60 * 30}
                         className="w-full"
                       />
                       <TimePicker
                         label="End Time"
-                        value={newTaskEndTime}
-                        onValueChanged={(e) => setNewTaskEndTime(e.detail.value)}
+                        value={newEventEndTime}
+                        onValueChanged={(e) => setNewEventEndTime(e.detail.value)}
                         step={60 * 30}
                         className="w-full"
                       />
@@ -652,11 +654,11 @@ export default function CalendarView({ projectId }: CalendarViewProps) {
               Cancel
             </button>
             <button
-              onClick={handleCreateTask}
-              disabled={!newTaskTitle}
+              onClick={handleCreateEvent}
+              disabled={!newEventTitle}
               className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
-              Create Task
+              Create Event
             </button>
           </div>
         </div>

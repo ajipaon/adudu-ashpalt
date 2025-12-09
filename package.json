@@ -41,7 +41,8 @@
     "proj4": "2.15.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-router": "7.6.3"
+    "react-router": "7.6.3",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@babel/preset-react": "7.27.1",
@@ -143,7 +144,7 @@
       "workbox-core": "7.3.0",
       "workbox-precaching": "7.3.0"
     },
-    "hash": "da0647a58a4b6e324ad16ce1c35fd6868e614b1fe22f803b0287f435e5865055"
+    "hash": "10fd9002ee0136ad3f3ff737f9c09e50a30a2bcdc6501e6f1c95464a20dce7ba"
   },
   "pnpm": {
     "overrides": {
@@ -252,7 +253,8 @@
       "@tiptap/extension-color": "$@tiptap/extension-color",
       "@tiptap/extension-image": "$@tiptap/extension-image",
       "@tiptap/extension-text-style": "$@tiptap/extension-text-style",
-      "@tiptap/extension-placeholder": "$@tiptap/extension-placeholder"
+      "@tiptap/extension-placeholder": "$@tiptap/extension-placeholder",
+      "zustand": "$zustand"
     }
   }
 }

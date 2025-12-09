@@ -126,7 +126,7 @@ public class ProjectService {
     }
 
     @RolesAllowed("project-view")
-    public List<Post> getTasksByColumnId(UUID columnId) {
+    public List<Post> getTasksByColumnId(UUID columnId, UUID userAssigne) {
 
         Post column = postRepository.findById(columnId).orElse(null);
         if (column == null) {
@@ -135,6 +135,10 @@ public class ProjectService {
 
         if (!hasProjectAccess(column.getPostParent(), authenticatedUser.getUserId())) {
             throw new SecurityException("Access denied to this project");
+        }
+
+        if(userAssigne != null){
+            return  postRepository.findPostByAssignedTasks("task", userAssigne.toString(), columnId);
         }
 
         return postService.getTasksByColumn(columnId);
