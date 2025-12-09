@@ -83,8 +83,6 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
         UUID getAuthorId();
     }
 
-    // New queries for SummaryView
-
     @Query("SELECT COUNT(p) FROM Post p WHERE p.postType = :postType AND p.projectId = :projectId AND p.updatedAt >= :since")
     long countByPostTypeAndProjectIdAndUpdatedAtAfter(@Param("postType") String postType,
             @Param("projectId") UUID projectId, @Param("since") LocalDateTime since);

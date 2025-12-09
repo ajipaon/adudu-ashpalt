@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { ProjectService } from 'Frontend/generated/endpoints';
 import ProjectSummaryDto from 'Frontend/generated/com/adudu/ashpalt/models/project/dto/ProjectSummaryDto';
+import { ProjectService } from 'Frontend/generated/endpoints';
+import { useEffect, useState } from 'react';
 
 interface SummaryViewProps {
   projectId: string;
@@ -105,7 +105,10 @@ export default function SummaryView({ projectId }: SummaryViewProps) {
             {/* Simple visualization for status overview */}
             <div className="grid grid-cols-2 gap-4 w-full">
               {Object.entries(summary.statusOverview || {}).map(([status, count]) => (
-                <div key={status} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                <div
+                  key={status}
+                  className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                >
                   <span className="font-medium">{status}</span>
                   <span className="font-bold">{count}</span>
                 </div>
@@ -121,7 +124,7 @@ export default function SummaryView({ projectId }: SummaryViewProps) {
             Get a holistic view of how your work is being prioritized.{' '}
           </p>
           <div className="h-64 flex items-end justify-around gap-4 mb-4">
-            {['Highest', 'High', 'Medium', 'Low', 'Lowest'].map((priority) => {
+            {['DEFAULT', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((priority) => {
               const count = summary.priorityBreakdown?.[priority] || 0;
               const values = Object.values(summary.priorityBreakdown || { a: 0 }).filter(
                 (v): v is number => typeof v === 'number'
@@ -140,7 +143,10 @@ export default function SummaryView({ projectId }: SummaryViewProps) {
                         : 'bg-gray-500';
 
               return (
-                <div key={priority} className="flex flex-col items-center flex-1 h-full justify-end">
+                <div
+                  key={priority}
+                  className="flex flex-col items-center flex-1 h-full justify-end"
+                >
                   <div
                     className={`w-full ${color} rounded-t transition-all duration-500`}
                     style={{ height: height || '1px' }}
