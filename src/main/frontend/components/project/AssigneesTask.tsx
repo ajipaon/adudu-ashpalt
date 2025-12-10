@@ -5,7 +5,7 @@ import { PostMetaService, ProjectService } from 'Frontend/generated/endpoints';
 import { Plus, Users, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-const mKey = 'assignee';
+const mKey: string = 'assignee';
 const metaType: MetaType = MetaType.UUID;
 interface AssigneesTaskProps {
   postId: string;

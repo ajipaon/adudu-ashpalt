@@ -32,6 +32,7 @@ interface TaskDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   columns: any;
+  projectId: string;
 }
 
 interface ItemColumnProps {
@@ -50,6 +51,7 @@ export default function TaskDetailModal({
   isOpen,
   onClose,
   columns,
+  projectId,
 }: TaskDetailModalProps) {
   const [taskData, setTaskData] = useState<TaskWithContext | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,10 +62,7 @@ export default function TaskDetailModal({
   const [dueDate, setDueDate] = useState<string>('');
   const [priority, setPriority] = useState<PostMeta | null>(null);
   const [itemColumnList, setItemColumnList] = useState<ItemColumnProps[]>([]);
-  const [itemCrumb, setItemCrumb] = useState<Crumb[]>([
-    { label: 'Dashboard', href: '/' },
-    { label: 'Projects', href: '/project' },
-  ]);
+  const [itemCrumb, setItemCrumb] = useState<Crumb[]>([]);
 
   useEffect(() => {
     if (taskId && isOpen) {
@@ -84,8 +83,14 @@ export default function TaskDetailModal({
       setTaskData(data || null);
       setEditedTask(data?.task ?? null);
       setItemCrumb((prev) => [
-        ...prev,
-        { label: data?.task?.postTitle || '', href: `/project/${data?.task?.id}` },
+        ...[
+          { label: 'Dashboard', href: '/' },
+          { label: 'Projects', href: `/project/${projectId}` },
+        ],
+        {
+          label: data?.task?.postTitle || '',
+          href: `/project/${projectId}?current=${data?.task?.id}`,
+        },
       ]);
 
       if (data?.task) {
@@ -185,7 +190,7 @@ export default function TaskDetailModal({
       const byteArray = Array.from(bytes);
 
       const path = await ProjectService.uploadFile(byteArray, file.name);
-      loadTask(taskId);
+      await loadTask(taskId);
     } catch (error) {
       console.error('Failed to upload file', error);
       alert('Failed to upload file');

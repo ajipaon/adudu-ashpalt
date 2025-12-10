@@ -33,10 +33,11 @@ public interface PostMetaRepository extends JpaRepository<PostMeta, UUID> {
     List<PostMeta> findByPostIdIn(List<UUID> postIds);
 
     @Query(value = """
-            SELECT pm.* 
-            FROM post_meta pm
-            WHERE pm.meta_key = 'calendar'
-              AND  pm.meta_value::jsonb -> 'memberIds' @> CAST(('["' || :userId || '"]') AS jsonb)
-            """, nativeQuery = true)
+        SELECT pm.* 
+        FROM post_meta pm
+        WHERE pm.meta_key = 'calendar'
+          AND pm.meta_value::jsonb -> 'memberIds' @> CAST(('["' || :userId || '"]') AS jsonb)
+          AND (pm.meta_value::jsonb ->> 'date')::timestamp > NOW()
+        """, nativeQuery = true)
     List<PostMeta> findAssignedAgendas(@Param("userId") String userId);
 }

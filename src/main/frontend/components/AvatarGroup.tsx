@@ -86,8 +86,8 @@ const AvatarGroup: React.FC<AvatarGroupProps> = ({ projectId }) => {
             ${generateIconBgClass(avatar)} 
             ${
               isSelected(avatar)
-                ? 'border-white ring-2 ring-white shadow-lg'
-                : 'border-gray-800 hover:ring-2 hover:ring-white/50'
+                ? 'border-green-500 ring-2 ring-green-500 shadow-lg'
+                : ' hover:ring-2 hover:ring-white/50'
             }`}
         >
           {avatar?.userName?.charAt(0).toUpperCase() ?? 'N/A'}

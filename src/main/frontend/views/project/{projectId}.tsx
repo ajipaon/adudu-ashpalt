@@ -35,6 +35,7 @@ export default function BoardView() {
   >('board');
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const { projectMembersStore } = useProjectMembersStore();
+  const [editColumn, setEditColumn] = useState<ColumnWithTasks | null>(null);
 
   useEffect(() => {
     const updateCurrent = async () => {
@@ -240,6 +241,20 @@ export default function BoardView() {
     await loadProject(project!.id!);
   }
 
+  async function handleSaveColumnName() {
+    try {
+      const currentColumn = await ProjectService.getTask(editColumn?.id);
+      if (currentColumn) {
+        currentColumn.postTitle = editColumn?.postTitle;
+        await ProjectService.saveTask(currentColumn);
+      }
+    } catch (error) {
+      console.error('Failed to save task', error);
+    }
+    if (projectId) await loadProject(projectId);
+    setEditColumn(null);
+  }
+
   if (!project) return <div>Loading...</div>;
 
   return (
@@ -316,7 +331,28 @@ export default function BoardView() {
                   className="w-80 min-w-[20rem] bg-gray-100 rounded-xl shadow-lg flex flex-col relative"
                 >
                   <div className="p-4 border-b text-gray-700 font-bold flex justify-between items-center group">
-                    <span>{col.postTitle}</span>
+                    {editColumn?.id == col.id ? (
+                      <input
+                        type="text"
+                        value={editColumn?.postTitle || ''}
+                        onChange={(e) =>
+                          setEditColumn((prev: Post | null) =>
+                            prev ? { ...prev, postTitle: e.target.value } : null
+                          )
+                        }
+                        onBlur={() => handleSaveColumnName()}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSaveColumnName()}
+                        className="w-full font-bold text-gray-100 border-2 border-blue-500 rounded focus:outline-none bg-slate-700"
+                        autoFocus
+                      />
+                    ) : (
+                      <span
+                        className="cursor-pointer hover:pointer-events-auto"
+                        onClick={() => setEditColumn(col)}
+                      >
+                        {col.postTitle}
+                      </span>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -365,7 +401,9 @@ export default function BoardView() {
                           <select
                             value={col.postOrder}
                             onChange={(e) => {
-                              handleMoveColumn(col.id!!, e.target.value);
+                              handleMoveColumn(col.id!!, e.target.value).then((r) => {
+                                return;
+                              });
                             }}
                             className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
@@ -546,6 +584,7 @@ export default function BoardView() {
       <TaskDetailModal
         taskId={currentTaskId}
         isOpen={!!currentTaskId}
+        projectId={projectId!}
         onClose={() => {
           const url = new URL(window.location.href);
           url.searchParams.delete('current');

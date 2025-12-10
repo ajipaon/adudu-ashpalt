@@ -43,19 +43,21 @@ export function Breadcrumb({ items }: { items: Crumb[] }) {
                   {content}
                 </a>
               ) : it.onClick && !isLast ? (
-                <button
+                <a
+                  href={it.href}
                   onClick={it.onClick}
-                  className="inline-flex items-center gap-1 max-w-[18rem] text-left text-gray-600 hover:text-gray-900 hover:underline"
+                  className="inline-flex items-center gap-1 max-w-[18rem]"
                 >
                   {content}
-                </button>
+                </a>
               ) : (
-                <span
-                  className="inline-flex items-center gap-1 max-w-[18rem] text-gray-900 font-semibold"
-                  aria-current="page"
+                <a
+                  href={it.href}
+                  onClick={it.onClick}
+                  className="inline-flex items-center gap-1 max-w-[18rem]"
                 >
                   {content}
-                </span>
+                </a>
               )}
 
               {!isLast && (
